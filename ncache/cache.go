@@ -21,7 +21,7 @@ type multiCache struct {
 // New 以配置创建 Cache 实例
 func New(conf Config) (Cache, error) {
 	if !conf.Enable {
-		// 返回一个 no-op cache?
+		// 返回一个 no-op cache 无操作缓存
 		// 这里仍创建层，方便后续启用
 		// 写不来了
 	}
@@ -89,7 +89,7 @@ func (c *multiCache) Get(ctx context.Context, key string) ([]byte, error) {
 		if rec.N {
 			return nil, ErrNotFound
 		}
-		// 回灌上层
+		// 回到上层
 		for j := 0; j < i; j++ {
 			_ = c.layers[j].Set(ctx, nk, b, c.conf.DefaultTTL)
 		}
@@ -155,10 +155,10 @@ func (c *multiCache) Remember(ctx context.Context, key string, loader LoaderFunc
 
 	switch ro.policy {
 	case PolicyCacheAsideSingleFlight:
-		// 单飞 + 窗口内共享
+		// 旁路缓存 + 单飞
 		nk := c.namespaced(key)
 		v, err, _ := c.sf.Do(nk, func() (any, error) {
-			// Double check
+			// 执行双重检查
 			if vv, err := c.Get(ctx, key); err == nil {
 				return vv, nil
 			}
@@ -182,6 +182,7 @@ func (c *multiCache) Remember(ctx context.Context, key string, loader LoaderFunc
 		}
 		return v.([]byte), nil
 	case PolicyCacheAside:
+		// 简单的旁路缓存
 		val, ttl, err := loader(ctx)
 		if err != nil {
 			if isNotFound(err) {
@@ -196,15 +197,18 @@ func (c *multiCache) Remember(ctx context.Context, key string, loader LoaderFunc
 		_ = c.Set(ctx, key, val, ttl)
 		return val, nil
 	default:
-		// 兜底按单飞策略
+		// 默认执行单飞策略
 		return c.Remember(ctx, key, loader, WithTTL(ro.ttl), WithPolicy(PolicyCacheAsideSingleFlight))
 	}
 }
 
+// setNegative 写入负缓存
 func (c *multiCache) setNegative(ctx context.Context, key string) error {
 	nk := c.namespaced(key)
+	// 负缓存TTL
 	ttl := c.conf.NegativeTTL
 	if ttl <= 0 {
+		// 默认30秒
 		ttl = 30 * time.Second
 	}
 	ttl = c.applyJitter(ttl)
@@ -218,6 +222,9 @@ func (c *multiCache) setNegative(ctx context.Context, key string) error {
 	return firstErr
 }
 
+// 应用 TTL 抖动
+// 避免缓存雪崩
+// 抖动范围由 JitterPercent 决定，取值范围 [-1.0, +1.0]
 func (c *multiCache) applyJitter(ttl time.Duration) time.Duration {
 	if c.conf.JitterPercent <= 0 {
 		return ttl
@@ -240,6 +247,7 @@ func isNotFound(err error) bool {
 	if err == ErrNotFound {
 		return true
 	}
+	// 与其他系统的 ErrNotFound 文案兼容（尽量宽松）
 	if strings.Contains(err.Error(), "资源不存在") {
 		return true
 	}

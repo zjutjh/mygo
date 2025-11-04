@@ -25,13 +25,16 @@ func newMemoryLayer(conf MemoryConfig) *memoryLayer {
 		max:     conf.MaxEntries,
 		closing: make(chan struct{}),
 	}
+	// 如果配置了 conf.CleanInterval，则启动定期清理过期缓存的协程
 	if conf.CleanInterval > 0 {
+		// 启动一个 janitor Goroutine 定期清理过期缓存
 		ml.ticker = time.NewTicker(conf.CleanInterval)
 		go ml.janitor()
 	}
 	return ml
 }
 
+// 过期缓存清理机制
 func (m *memoryLayer) janitor() {
 	for {
 		select {
@@ -59,11 +62,13 @@ func (m *memoryLayer) stop() {
 }
 
 func (m *memoryLayer) Get(ctx context.Context, key string) ([]byte, time.Duration, bool, error) {
+	//首先尝试用 m.m.Load(key) 加载值
 	v, ok := m.m.Load(key)
 	if !ok {
 		return nil, 0, false, nil
 	}
 	it := v.(memoryItem)
+	// 检查缓存是否过期
 	if !it.expireAt.IsZero() && time.Now().After(it.expireAt) {
 		m.m.Delete(key)
 		return nil, 0, false, nil
