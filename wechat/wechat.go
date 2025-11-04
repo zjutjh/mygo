@@ -3,56 +3,32 @@ package wechat
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/redis/go-redis/v9"
 	"github.com/tidwall/gjson"
 
 	"github.com/zjutjh/mygo/kit"
-	"github.com/zjutjh/mygo/nedis"
+	"github.com/zjutjh/mygo/nesty"
+)
+
+var (
+	rdb  redis.UniversalClient
+	rctx context.Context
 )
 
 type Wechat struct {
-	conf   Config
-	client *resty.Client
+	conf  Config
+	resty *resty.Client
 }
 
-// New 以指定配置创建实例
 func New(conf Config) *Wechat {
-	// 初始化HTTP Client实例
-	hc := &http.Client{
-		Timeout: conf.Timeout,
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   conf.DialContextTimeout,
-				KeepAlive: conf.DialContextKeepAlive,
-			}).DialContext,
-			TLSHandshakeTimeout:    conf.TLSHandshakeTimeout,
-			DisableKeepAlives:      conf.DisableKeepAlives,
-			DisableCompression:     conf.DisableCompression,
-			MaxIdleConns:           conf.MaxIdleConns,
-			MaxIdleConnsPerHost:    conf.MaxIdleConnsPerHost,
-			MaxConnsPerHost:        conf.MaxConnsPerHost,
-			IdleConnTimeout:        conf.IdleConnTimeout,
-			ResponseHeaderTimeout:  conf.ResponseHeaderTimeout,
-			ExpectContinueTimeout:  conf.ExpectContinueTimeout,
-			MaxResponseHeaderBytes: conf.MaxResponseHeaderBytes,
-			WriteBufferSize:        conf.WriteBufferSize,
-			ReadBufferSize:         conf.ReadBufferSize,
-			ForceAttemptHTTP2:      conf.ForceAttemptHTTP2,
-		},
-	}
-
-	// 初始化resty Client
-	client := resty.NewWithClient(hc)
-
 	return &Wechat{
-		conf:   conf,
-		client: client,
+		conf:  conf,
+		resty: nesty.Pick(conf.Resty),
 	}
 }
 
@@ -82,7 +58,7 @@ func (w *Wechat) GetOpenID(code string) (string, error) {
 	}
 
 	getOpenIDURL := "https://api.weixin.qq.com/sns/oauth2/access_token"
-	resp, err := w.client.R().SetQueryParams(map[string]string{
+	resp, err := w.resty.R().SetQueryParams(map[string]string{
 		"appid":      w.conf.AppID,
 		"secret":     w.conf.AppSecret,
 		"code":       code,
@@ -111,16 +87,18 @@ func (w *Wechat) GetAccessToken() (string, error) {
 		return "", fmt.Errorf("%w: 微信功能未启用", kit.ErrNotFound)
 	}
 
-	// Redis缓存中获取access_token
-	rdb := nedis.Pick(w.conf.TokenCacheKey)
+	ctx := rctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if rdb != nil {
-		if val, err := rdb.Get(context.Background(), w.conf.TokenCacheKey).Result(); err == nil {
+		if val, err := rdb.Get(ctx, w.conf.TokenCacheKey).Result(); err == nil {
 			return val, nil
 		}
 	}
 
 	// 重新获取access_token
-	resp, err := w.client.R().
+	resp, err := w.resty.R().
 		SetQueryParams(map[string]string{
 			"grant_type": "client_credential",
 			"appid":      w.conf.AppID,
@@ -143,16 +121,16 @@ func (w *Wechat) GetAccessToken() (string, error) {
 		return "", fmt.Errorf("获取AccessToken失败: %s", jsonData)
 	}
 
-	// 缓存access_token
+	// 缓存access_token（提前30分钟过期）
 	expireTime := gjson.Get(jsonData, "expires_in").Int() - 60*30
 	if rdb != nil {
-		rdb.Set(context.Background(), w.conf.TokenCacheKey, accessToken, time.Duration(expireTime)*time.Second)
+		_ = rdb.Set(ctx, w.conf.TokenCacheKey, accessToken, time.Duration(expireTime)*time.Second).Err()
 	}
 
 	return accessToken, nil
 }
 
-func (w *Wechat) SendMessage(message, openID string) error {
+func (w *Wechat) SendMessageWithWechat(message, openID string) error {
 	if !w.conf.Enable {
 		return nil
 	}
@@ -170,7 +148,10 @@ func (w *Wechat) SendMessage(message, openID string) error {
 		return fmt.Errorf("获取AccessToken失败: %w", err)
 	}
 
-	msgContent := message + "\n---\n因为微信的限制，请回复'收到'以确保后续消息的正常接收"
+	msgContent := message
+	if tail := w.conf.MessageSuffix; tail != "" {
+		msgContent = message + "\n---\n" + tail
+	}
 
 	params := map[string]interface{}{
 		"touser":  openID,
@@ -180,7 +161,7 @@ func (w *Wechat) SendMessage(message, openID string) error {
 		},
 	}
 
-	resp, err := w.client.R().
+	resp, err := w.resty.R().
 		SetBody(params).
 		Post("https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=" + accessToken)
 
