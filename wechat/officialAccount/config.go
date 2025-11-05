@@ -1,8 +1,7 @@
-package officalAccount
+package officialAccount
 
 // DefaultConfig 默认配置
 var DefaultConfig = Config{
-	Enable:    false,
 	AppID:     "",
 	Secret:    "",
 	Token:     "",
@@ -17,7 +16,6 @@ var DefaultConfig = Config{
 	},
 }
 
-// LogConfig 日志配置
 type LogConfig struct {
 	Level  string `mapstructure:"level" json:"level" yaml:"level"`
 	File   string `mapstructure:"file" json:"file" yaml:"file"`
@@ -25,7 +23,6 @@ type LogConfig struct {
 	Stdout bool   `mapstructure:"stdout" json:"stdout" yaml:"stdout"`
 }
 
-// Config 公众号 SDK 初始化配置
 type Config struct {
 	Enable    bool      `mapstructure:"enable" json:"enable" yaml:"enable"`
 	AppID     string    `mapstructure:"appid" json:"appid" yaml:"appid"`

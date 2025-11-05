@@ -1,7 +1,6 @@
-package wechat
+package officialAccount
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/jinzhu/copier"
@@ -9,12 +8,11 @@ import (
 
 	"github.com/zjutjh/mygo/config"
 	"github.com/zjutjh/mygo/kit"
-	"github.com/zjutjh/mygo/nedis"
 )
 
 const (
-	iocPrefix    = "_wechat_:"
-	defaultScope = "wechat"
+	iocPrefix    = "_wechat_official_account_:"
+	defaultScope = "wechat_official_account"
 )
 
 // Boot 预加载默认实例 同时加载指定实例列表
@@ -34,17 +32,17 @@ func Boot(scopes ...string) func() error {
 
 // Exist 判断scope实例是否挂载 (被Boot过) 且类型正确
 func Exist(scope string) bool {
-	_, err := do.InvokeNamed[*Wechat](nil, iocPrefix+scope)
+	_, err := do.InvokeNamed[*OfficalAccount](nil, iocPrefix+scope)
 	return err == nil
 }
 
 // Pick 获取指定scope实例
-func Pick(scopes ...string) *Wechat {
+func Pick(scopes ...string) *OfficalAccount {
 	scope := defaultScope
 	if len(scopes) != 0 && scopes[0] != "" {
 		scope = scopes[0]
 	}
-	return do.MustInvokeNamed[*Wechat](nil, iocPrefix+scope)
+	return do.MustInvokeNamed[*OfficalAccount](nil, iocPrefix+scope)
 }
 
 // provide 提供指定scope实例
@@ -55,22 +53,19 @@ func provide(scope string) error {
 		return err
 	}
 
-	// 初始化包级全局 Redis 与 Context（仅在未设置时注入）
-	if rdb == nil {
-		if client := nedis.Pick(conf.Redis); client != nil {
-			rdb = client
-		}
-	}
-	if rctx == nil {
-		rctx = context.Background()
+	// 未启用时直接跳过，不中断整体 Boot 流程
+	if !conf.Enable {
+		return nil
 	}
 
 	// 初始化实例
-	instance := New(conf)
+	instance, err := New(conf)
+	if err != nil {
+		return err
+	}
 
 	// 挂载实例
 	do.ProvideNamedValue(nil, iocPrefix+scope, instance)
-
 	return nil
 }
 
@@ -81,11 +76,13 @@ func getConf(scope string) (conf Config, err error) {
 	if err != nil {
 		return conf, err
 	}
+
 	// 判断 scope 配置是否存在
 	cfg := config.Pick()
 	if !cfg.IsSet(scope) {
 		return conf, fmt.Errorf("%w: 配置config.yaml[%s]不存在", kit.ErrNotFound, scope)
 	}
+
 	// 解析 config.yaml[{scope}]
 	err = cfg.UnmarshalKey(scope, &conf)
 	if err != nil {

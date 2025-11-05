@@ -1,4 +1,4 @@
-package officalAccount
+package officialAccount
 
 import (
 	"fmt"
@@ -6,13 +6,11 @@ import (
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
 )
 
-// OfficalAccount 封装 PowerWeChat 公众号客户端
 type OfficalAccount struct {
 	conf Config
 	app  *officialAccount.OfficialAccount
 }
 
-// New 基于配置初始化 PowerWeChat 公众号客户端
 func New(conf Config) (*OfficalAccount, error) {
 	if !conf.Enable {
 		return nil, fmt.Errorf("official account 未启用")
@@ -44,7 +42,6 @@ func New(conf Config) (*OfficalAccount, error) {
 	}, nil
 }
 
-// Client 返回底层 PowerWeChat OfficialAccount 客户端
 func (o *OfficalAccount) Client() *officialAccount.OfficialAccount {
 	return o.app
 }
