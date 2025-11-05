@@ -6,6 +6,14 @@ import (
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
 )
 
+/*
+关于Oauth和messages方法，请参考官方文档：
+入门https://powerwechat.artisan-cloud.com/zh/official-account/
+消息https://powerwechat.artisan-cloud.com/zh/official-account/messages.html
+网页授权https://powerwechat.artisan-cloud.com/zh/official-account/oauth.html
+
+*/
+
 type OfficalAccount struct {
 	conf Config
 	app  *officialAccount.OfficialAccount
