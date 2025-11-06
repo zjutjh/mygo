@@ -35,18 +35,24 @@ type Config struct {
 	Layers []LayerConfig `mapstructure:"layers"`
 }
 
+// 单层缓存配置
 type LayerConfig struct {
-	Type   string       `mapstructure:"type"` // memory | redis
+	Type   string       `mapstructure:"type"`
 	Memory MemoryConfig `mapstructure:"memory"`
 	Redis  RedisConfig  `mapstructure:"redis"`
 }
 
+// 内存缓存层配置
 type MemoryConfig struct {
 	MaxEntries    int           `mapstructure:"max_entries"`
 	CleanInterval time.Duration `mapstructure:"clean_interval"`
+	// 命中率统计与日志输出（可选）。当 interval>0 且 log scope 存在时，会周期性输出命中率。
+	StatsInterval time.Duration `mapstructure:"stats_interval"`
+	StatsLog      string        `mapstructure:"stats_log"`
 }
 
+// Redis缓存层配置
 type RedisConfig struct {
-	// 复用 nedis 的 scope 名（如：redis）
+	// 复用 nedis 的 scope 名
 	Scope string `mapstructure:"scope"`
 }

@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"golang.org/x/sync/singleflight"
+
+	"github.com/zjutjh/mygo/nedis"
 )
 
 // 多级缓存架构实现
@@ -36,6 +38,10 @@ func New(conf Config) (Cache, error) {
 			scope := lc.Redis.Scope
 			if scope == "" {
 				scope = "redis"
+			}
+			// 确保对应的 Redis scope 已经由 nedis.Boot 提供，否则给出明确错误提示
+			if !nedis.Exist(scope) {
+				return nil, fmt.Errorf("ncache: 需要的 Redis scope[%s] 尚未初始化，请在启动阶段先调用 nedis.Boot(%q)", scope, scope)
 			}
 			layers = append(layers, newRedisLayer(scope))
 		}

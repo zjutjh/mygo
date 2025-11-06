@@ -9,15 +9,19 @@ import (
 	"github.com/zjutjh/mygo/nedis"
 )
 
+// 调用nedis包来获取Redis客户端
+// 使用Redis实现分布式缓存层
 type redisLayer struct {
 	client redis.UniversalClient
 }
 
+// 创建Redis缓存层实例
 func newRedisLayer(scope string) *redisLayer {
 	cli := nedis.Pick(scope)
 	return &redisLayer{client: cli}
 }
 
+// 实现Layer接口
 func (r *redisLayer) Get(ctx context.Context, key string) ([]byte, time.Duration, bool, error) {
 	res, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {
@@ -26,7 +30,7 @@ func (r *redisLayer) Get(ctx context.Context, key string) ([]byte, time.Duration
 		}
 		return nil, 0, false, err
 	}
-	// 尝试获取剩余TTL（某些模式可能不支持，忽略错误）
+	// 尝试获取剩余TTL
 	ttl := time.Duration(0)
 	d, err := r.client.TTL(ctx, key).Result()
 	if err == nil && d > 0 {
