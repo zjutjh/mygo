@@ -9,11 +9,6 @@ import (
 	"github.com/zjutjh/mygo/nedis"
 )
 
-type WeChat struct {
-	conf        Config
-	miniProgram *miniProgram.MiniProgram
-}
-
 /**
  * 使用方法请参考官方文档
  * 入门://powerwechat.artisan-cloud.com/zh/mini-program/
@@ -22,7 +17,7 @@ type WeChat struct {
  */
 
 // New 创建微信服务实例
-func New(conf Config) (*WeChat, error) {
+func New(conf Config) (*miniProgram.MiniProgram, error) {
 
 	var kernelCache cache.CacheInterface
 	gr := cache.NewGRedis(&redis.UniversalOptions{})
@@ -52,8 +47,5 @@ func New(conf Config) (*WeChat, error) {
 		return nil, fmt.Errorf("初始化 微信小程序 失败: %w", err)
 	}
 
-	return &WeChat{
-		conf:        conf,
-		miniProgram: mp,
-	}, nil
+	return mp, nil
 }
