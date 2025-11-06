@@ -2,7 +2,6 @@ package lock
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-redsync/redsync/v4"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
@@ -13,10 +12,13 @@ type RedisLock struct {
 	mutex *redsync.Mutex
 }
 
-func NewRedisLock(client *redis.Client, key string, expiry time.Duration) *RedisLock {
+func New(client redis.UniversalClient, conf Config) *RedisLock {
 	pool := goredis.NewPool(client)
 	rs := redsync.New(pool)
-	mutex := rs.NewMutex(key, redsync.WithExpiry(expiry))
+	mutex := rs.NewMutex(conf.RedisKey,
+		redsync.WithExpiry(conf.Expiry),
+		redsync.WithRetryDelay(conf.RetryDelay),
+		redsync.WithTries(conf.RetryCount+1))
 	return &RedisLock{mutex: mutex}
 }
 
