@@ -54,11 +54,6 @@ func provide(scope string) error {
 		return err
 	}
 
-	// 未启用时直接跳过，不中断整体 Boot 流程
-	if !conf.Enable {
-		return nil
-	}
-
 	// 初始化实例
 	instance, err := New(conf)
 	if err != nil {

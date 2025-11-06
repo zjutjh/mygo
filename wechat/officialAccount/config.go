@@ -24,7 +24,6 @@ type LogConfig struct {
 }
 
 type Config struct {
-	Enable    bool      `mapstructure:"enable" json:"enable" yaml:"enable"`
 	AppID     string    `mapstructure:"appid" json:"appid" yaml:"appid"`
 	Secret    string    `mapstructure:"secret" json:"secret" yaml:"secret"`
 	Token     string    `mapstructure:"token" json:"token" yaml:"token"`
