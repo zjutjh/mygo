@@ -23,7 +23,6 @@ func envBool(key string, def bool) bool {
 func main() {
 	// 1) 读取配置（环境变量）
 	conf := wechatOA.Config{
-		Enable:    true,
 		AppID:     os.Getenv("WECHAT_APPID"),
 		Secret:    os.Getenv("WECHAT_SECRET"),
 		Token:     os.Getenv("WECHAT_TOKEN"),
@@ -68,7 +67,7 @@ func main() {
 
 	// 可选：如果你已经从回调拿到了 code，这里演示如何在服务端换取 token/openid
 	if code := strings.TrimSpace(os.Getenv("WECHAT_TEST_CODE")); code != "" {
-		app := cli.Client()
+		app := cli
 		tokenResp, err := app.OAuth.TokenFromCode(code)
 		if err != nil {
 			log.Fatalf("TokenFromCode error: %v", err)
@@ -83,7 +82,7 @@ func main() {
 	if openID != "" && text != "" {
 		fmt.Println("尝试发送客服消息…")
 		// 使用 PowerWeChat 直接发送客服文本消息，参考：https://powerwechat.artisan-cloud.com/zh/official-account/messages.html
-		app := cli.Client()
+		app := cli
 		msg := messages.NewText(text)
 		if _, err := app.CustomerService.Message(context.Background(), msg).SetTo(openID).Send(context.Background()); err != nil {
 			log.Fatalf("send text error: %v", err)

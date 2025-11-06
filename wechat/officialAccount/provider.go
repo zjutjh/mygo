@@ -3,6 +3,7 @@ package officialAccount
 import (
 	"fmt"
 
+	pwoa "github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
 	"github.com/jinzhu/copier"
 	"github.com/samber/do"
 
@@ -32,17 +33,17 @@ func Boot(scopes ...string) func() error {
 
 // Exist 判断scope实例是否挂载 (被Boot过) 且类型正确
 func Exist(scope string) bool {
-	_, err := do.InvokeNamed[*OfficalAccount](nil, iocPrefix+scope)
+	_, err := do.InvokeNamed[*pwoa.OfficialAccount](nil, iocPrefix+scope)
 	return err == nil
 }
 
 // Pick 获取指定scope实例
-func Pick(scopes ...string) *OfficalAccount {
+func Pick(scopes ...string) *pwoa.OfficialAccount {
 	scope := defaultScope
 	if len(scopes) != 0 && scopes[0] != "" {
 		scope = scopes[0]
 	}
-	return do.MustInvokeNamed[*OfficalAccount](nil, iocPrefix+scope)
+	return do.MustInvokeNamed[*pwoa.OfficialAccount](nil, iocPrefix+scope)
 }
 
 // provide 提供指定scope实例

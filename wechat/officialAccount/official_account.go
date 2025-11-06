@@ -14,15 +14,8 @@ import (
 
 */
 
-type OfficalAccount struct {
-	conf Config
-	app  *officialAccount.OfficialAccount
-}
-
-func New(conf Config) (*OfficalAccount, error) {
-	if !conf.Enable {
-		return nil, fmt.Errorf("official account 未启用")
-	}
+// New 直接返回 PowerWeChat 的 OfficialAccount 客户端实例
+func New(conf Config) (*officialAccount.OfficialAccount, error) {
 
 	pwConf := &officialAccount.UserConfig{
 		AppID:     conf.AppID,
@@ -44,12 +37,5 @@ func New(conf Config) (*OfficalAccount, error) {
 		return nil, fmt.Errorf("初始化 PowerWeChat OfficialAccount 失败: %w", err)
 	}
 
-	return &OfficalAccount{
-		conf: conf,
-		app:  app,
-	}, nil
-}
-
-func (o *OfficalAccount) Client() *officialAccount.OfficialAccount {
-	return o.app
+	return app, nil
 }
