@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	iocPrefix    = "_wechat_"
-	defaultScope = "wechat"
+	iocPrefix    = "_wechat_mini_program_"
+	defaultScope = "wechat_mini_program"
 )
 
 // Boot 预加载默认实例
@@ -50,7 +50,7 @@ func provide(scope string) error {
 		return err
 	}
 	// 初始化实例
-	instance := New(conf)
+	instance, _ := New(conf)
 	// 挂载实例
 	do.ProvideNamedValue(nil, iocPrefix+scope, instance)
 	return nil

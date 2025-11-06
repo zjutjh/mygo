@@ -11,11 +11,12 @@ var DefaultConfig = Config{
 	AesKey:    "",
 
 	HttpDebug: true,
+	Debug:     true,
 
 	Log: LogConfig{
 		Level:  "debug",
-		File:   "",
-		Error:  "",
+		File:   "./logs/app.log",
+		Error:  "./logs/app.log",
 		Stdout: false,
 	},
 
@@ -33,6 +34,7 @@ type Config struct {
 	AesKey    string `mapstructure:"aes_key"`
 
 	HttpDebug bool `mapstructure:"http_debug"`
+	Debug     bool `mapstructure:"debug"`
 
 	Log LogConfig `mapstructure:"log"`
 	//Redis配置
