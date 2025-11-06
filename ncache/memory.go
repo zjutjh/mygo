@@ -68,7 +68,8 @@ func (m *memoryLayer) janitor() {
 	}
 }
 
-func (m *memoryLayer) stop() {
+// Close 关闭后台定时器与协程
+func (m *memoryLayer) Close() error {
 	if m.ticker != nil {
 		m.ticker.Stop()
 	}
@@ -76,6 +77,7 @@ func (m *memoryLayer) stop() {
 		m.statsTicker.Stop()
 	}
 	close(m.closing)
+	return nil
 }
 
 func (m *memoryLayer) Get(ctx context.Context, key string) ([]byte, time.Duration, bool, error) {

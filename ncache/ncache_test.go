@@ -43,6 +43,9 @@ func TestSetGet_MemoryOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new cache: %v", err)
 	}
+	if cl, ok := c.(interface{ Close() error }); ok {
+		t.Cleanup(func() { _ = cl.Close() })
+	}
 	ctx := context.Background()
 	key := "t:setget"
 	val := []byte("hello")
@@ -63,6 +66,9 @@ func TestRemember_SingleFlight_OnlyOnce(t *testing.T) {
 	c, err := New(conf)
 	if err != nil {
 		t.Fatalf("new cache: %v", err)
+	}
+	if cl, ok := c.(interface{ Close() error }); ok {
+		t.Cleanup(func() { _ = cl.Close() })
 	}
 	ctx := context.Background()
 	key := "t:sf:onlyonce"
@@ -97,6 +103,9 @@ func TestRemember_NegativeCache(t *testing.T) {
 	c, err := New(conf)
 	if err != nil {
 		t.Fatalf("new cache: %v", err)
+	}
+	if cl, ok := c.(interface{ Close() error }); ok {
+		t.Cleanup(func() { _ = cl.Close() })
 	}
 	ctx := context.Background()
 	key := "t:neg"

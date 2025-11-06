@@ -52,6 +52,16 @@ func New(conf Config) (Cache, error) {
 	return &multiCache{conf: conf, layers: layers}, nil
 }
 
+// Close 关闭所有层
+func (c *multiCache) Close() error {
+	for _, l := range c.layers {
+		if cl, ok := l.(interface{ Close() error }); ok {
+			_ = cl.Close()
+		}
+	}
+	return nil
+}
+
 func (c *multiCache) namespaced(key string) string {
 	if c.conf.Prefix == "" {
 		return key
