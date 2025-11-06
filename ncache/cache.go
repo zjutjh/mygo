@@ -22,10 +22,10 @@ type multiCache struct {
 
 // New 以配置创建 Cache 实例
 func New(conf Config) (Cache, error) {
+	// 如果未启用缓存，返回 no-op 实现，方便直接绕过缓存调试
 	if !conf.Enable {
-		// 返回一个 no-op cache 无操作缓存
-		// 这里仍创建层，方便后续启用
-		// 写不来了
+		// 返回一个 no-op cache，读总是未命中，写/删为 no-op
+		return noopCache{}, nil
 	}
 
 	// 构建层列表

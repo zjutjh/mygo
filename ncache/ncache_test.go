@@ -144,3 +144,41 @@ func TestApplyJitterBounds(t *testing.T) {
 		}
 	}
 }
+
+func TestNoop_DisabledCache(t *testing.T) {
+	conf := Config{Enable: false}
+	c, err := New(conf)
+	if err != nil {
+		t.Fatalf("new cache (disabled): %v", err)
+	}
+	ctx := context.Background()
+	// Get 应返回未命中
+	if _, err := c.Get(ctx, "k"); err != ErrNotFound {
+		t.Fatalf("disabled Get expect ErrNotFound, got %v", err)
+	}
+	// Set/Delete 为 no-op
+	if err := c.Set(ctx, "k", []byte("v"), time.Second); err != nil {
+		t.Fatalf("disabled Set expect nil, got %v", err)
+	}
+	if err := c.Delete(ctx, "k"); err != nil {
+		t.Fatalf("disabled Delete expect nil, got %v", err)
+	}
+	// Remember 每次都会调用 loader 且不写入缓存
+	var calls int32
+	loader := func(ctx context.Context) ([]byte, time.Duration, error) {
+		atomic.AddInt32(&calls, 1)
+		return []byte("vv"), 0, nil
+	}
+	v, err := c.Remember(ctx, "k", loader)
+	if err != nil || string(v) != "vv" {
+		t.Fatalf("disabled Remember unexpected: v=%s err=%v", string(v), err)
+	}
+	if _, err := c.Get(ctx, "k"); err != ErrNotFound {
+		t.Fatalf("disabled Remember should not write cache")
+	}
+	// 再次调用，应再次触发 loader
+	_, _ = c.Remember(ctx, "k", loader)
+	if calls != 2 {
+		t.Fatalf("loader called %d times, want 2", calls)
+	}
+}

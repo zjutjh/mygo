@@ -2,6 +2,10 @@ package ncache
 
 import "time"
 
+/*如果需要临时禁用缓存，配置文件可以直接这样写
+cache:
+enable: false
+*/
 // 默认配置
 var DefaultConfig = Config{
 	Enable:         true,
