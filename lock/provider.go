@@ -3,6 +3,7 @@ package lock
 import (
 	"fmt"
 
+	"github.com/go-redsync/redsync/v4"
 	"github.com/jinzhu/copier"
 	"github.com/samber/do"
 
@@ -31,16 +32,16 @@ func Boot(scopes ...string) func() error {
 }
 
 func Exist(scope string) bool {
-	_, err := do.InvokeNamed[*RedisLock](nil, iocPrefix+scope)
+	_, err := do.InvokeNamed[*redsync.Mutex](nil, iocPrefix+scope)
 	return err == nil
 }
 
-func Pick(scopes ...string) *RedisLock {
+func Pick(scopes ...string) *redsync.Mutex {
 	scope := defaultScope
 	if len(scopes) != 0 && scopes[0] != "" {
 		scope = scopes[0]
 	}
-	return do.MustInvokeNamed[*RedisLock](nil, iocPrefix+scope)
+	return do.MustInvokeNamed[*redsync.Mutex](nil, iocPrefix+scope)
 }
 
 func provide(scope string) error {
