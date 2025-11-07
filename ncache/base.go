@@ -44,3 +44,7 @@ type Layer interface {
 	Set(ctx context.Context, key string, val []byte, ttl time.Duration) error
 	Delete(ctx context.Context, key string) error
 }
+
+// BatchLoaderFunc 批量回源：对找到的 key 返回对应的值与 TTL。
+// 未找到的 key 不需要出现在返回 map 中（缺席即未命中）。
+// 批量相关接口与类型已迁移到 batch.go，保持 base.go 精简。

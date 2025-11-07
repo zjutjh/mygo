@@ -105,7 +105,7 @@ func (c *multiCache) Get(ctx context.Context, key string) ([]byte, error) {
 		if rec.N {
 			return nil, ErrNotFound
 		}
-		// 回到上层
+		// 如果第 i 层命中，下标 < i 的层会被调用 Set 回到上层
 		for j := 0; j < i; j++ {
 			_ = c.layers[j].Set(ctx, nk, b, c.conf.DefaultTTL)
 		}
@@ -269,3 +269,6 @@ func isNotFound(err error) bool {
 	}
 	return false
 }
+
+// 批量扩展：可选的层批量接口
+// 批量实现已移动到 cache_batch.go，保持本文件聚焦单键逻辑。

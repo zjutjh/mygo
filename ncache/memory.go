@@ -171,3 +171,60 @@ func (m *memoryLayer) statsLogger() {
 		}
 	}
 }
+
+// MGet 批量读取：逐键读取并判断过期，返回命中项与未命中 keys。
+func (m *memoryLayer) MGet(ctx context.Context, keys []string) (map[string][]byte, []string, error) {
+	hits := make(map[string][]byte, len(keys))
+	var missing []string
+	if len(keys) == 0 {
+		return hits, missing, nil
+	}
+	now := time.Now()
+	for _, key := range keys {
+		atomic.AddUint64(&m.gets, 1)
+		v, ok := m.m.Load(key)
+		if !ok {
+			missing = append(missing, key)
+			continue
+		}
+		it := v.(memoryItem)
+		if !it.expireAt.IsZero() && now.After(it.expireAt) {
+			m.m.Delete(key)
+			missing = append(missing, key)
+			continue
+		}
+		hits[key] = it.v
+		atomic.AddUint64(&m.hits, 1)
+	}
+	return hits, missing, nil
+}
+
+// MSet 批量写入：统一 TTL；写入后进行一次软上限清理。
+func (m *memoryLayer) MSet(ctx context.Context, items map[string][]byte, ttl time.Duration) error {
+	if len(items) == 0 {
+		return nil
+	}
+	var expireAt time.Time
+	if ttl > 0 {
+		expireAt = time.Now().Add(ttl)
+	}
+	for k, v := range items {
+		m.m.Store(k, memoryItem{v: v, expireAt: expireAt})
+	}
+	// 软上限：超过 maxEntries 后触发一次过期清理（不保证严格约束）
+	if m.max > 0 {
+		count := 0
+		m.m.Range(func(_, _ any) bool { count++; return count <= m.max+1 })
+		if count > m.max {
+			now := time.Now()
+			m.m.Range(func(key, value any) bool {
+				it, _ := value.(memoryItem)
+				if !it.expireAt.IsZero() && now.After(it.expireAt) {
+					m.m.Delete(key)
+				}
+				return true
+			})
+		}
+	}
+	return nil
+}
