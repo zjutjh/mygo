@@ -32,16 +32,16 @@ func Boot(scopes ...string) func() error {
 }
 
 func Exist(scope string) bool {
-	_, err := do.InvokeNamed[*redsync.Mutex](nil, iocPrefix+scope)
+	_, err := do.InvokeNamed[*redsync.Redsync](nil, iocPrefix+scope)
 	return err == nil
 }
 
-func Pick(scopes ...string) *redsync.Mutex {
+func Pick(scopes ...string) *redsync.Redsync {
 	scope := defaultScope
 	if len(scopes) != 0 && scopes[0] != "" {
 		scope = scopes[0]
 	}
-	return do.MustInvokeNamed[*redsync.Mutex](nil, iocPrefix+scope)
+	return do.MustInvokeNamed[*redsync.Redsync](nil, iocPrefix+scope)
 }
 
 func provide(scope string) error {
@@ -58,6 +58,29 @@ func provide(scope string) error {
 	do.ProvideNamedValue(nil, iocPrefix+scope, instance)
 
 	return nil
+}
+
+// 获取锁配置
+func GetMutex(rs *redsync.Redsync, lockName string, scopes ...string) *redsync.Mutex {
+	scope := defaultScope
+	if len(scopes) != 0 && scopes[0] != "" {
+		scope = scopes[0]
+	}
+
+	conf, err := getConf(scope)
+	if err != nil {
+		return rs.NewMutex(lockName)
+	}
+
+	lockConfig, exists := conf.Locks[lockName]
+	if !exists {
+		lockConfig = conf.DefaultLock
+	}
+
+	return rs.NewMutex(lockName,
+		redsync.WithExpiry(lockConfig.Expiry),
+		redsync.WithRetryDelay(lockConfig.RetryDelay),
+		redsync.WithTries(lockConfig.RetryCount+1))
 }
 
 func getConf(scope string) (conf Config, err error) {
