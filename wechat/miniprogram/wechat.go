@@ -20,9 +20,13 @@ import (
 func New(conf Config) (*miniProgram.MiniProgram, error) {
 
 	var kernelCache cache.CacheInterface
-	gr := cache.NewGRedis(&redis.UniversalOptions{})
-	gr.Pool = nedis.Pick(conf.Redis)
-	kernelCache = gr
+	if conf.EnableRedis {
+		gr := cache.NewGRedis(&redis.UniversalOptions{})
+		gr.Pool = nedis.Pick(conf.Redis)
+		kernelCache = gr
+	} else {
+		kernelCache = cache.NewMemCache("", cache.DEFAULT_EXPIRES_IN, "")
+	}
 
 	mp, err := miniProgram.NewMiniProgram(&miniProgram.UserConfig{
 		AppID:  conf.AppId,

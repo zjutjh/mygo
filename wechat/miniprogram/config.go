@@ -21,6 +21,7 @@ var DefaultConfig = Config{
 	},
 
 	Redis:       "",
+	EnableRedis: false,
 	MaxActive:   10,
 	MaxIdle:     10,
 	IdleTimeout: 60 * time.Second,
@@ -37,9 +38,10 @@ type Config struct {
 	Debug     bool `mapstructure:"debug"`
 
 	Log LogConfig `mapstructure:"log"`
-	//Redis配置
-	Redis string `mapstructure:"redis"`
 
+	//Redis配置
+	Redis       string        `mapstructure:"redis"`
+	EnableRedis bool          `mapstructure:"enable_redis"`
 	MaxActive   int           `mapstructure:"max_active"`
 	MaxIdle     int           `mapstructure:"max_idle"`
 	IdleTimeout time.Duration `mapstructure:"idle_timeout"`

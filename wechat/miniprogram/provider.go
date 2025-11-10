@@ -3,6 +3,7 @@ package miniprogram
 import (
 	"fmt"
 
+	"github.com/ArtisanCloud/PowerWeChat/v3/src/miniProgram"
 	"github.com/jinzhu/copier"
 	"github.com/samber/do"
 	"github.com/zjutjh/mygo/config"
@@ -30,17 +31,17 @@ func Boot(scopes ...string) func() error {
 
 // Exist 判断实例是否挂载（被Boot过）且类型正确
 func Exist(scope string) bool {
-	_, err := do.InvokeNamed[*WeChat](nil, iocPrefix+scope)
+	_, err := do.InvokeNamed[*miniProgram.MiniProgram](nil, iocPrefix+scope)
 	return err == nil
 }
 
 // Pick 获取指定scope实例
-func Pick(scopes ...string) *WeChat {
+func Pick(scopes ...string) *miniProgram.MiniProgram {
 	scope := defaultScope
 	if len(scopes) != 0 && scopes[0] != "" {
 		scope = scopes[0]
 	}
-	return do.MustInvokeNamed[*WeChat](nil, iocPrefix+scope)
+	return do.MustInvokeNamed[*miniProgram.MiniProgram](nil, iocPrefix+scope)
 }
 
 // provide 提供指定scope实例
