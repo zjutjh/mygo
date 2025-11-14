@@ -46,14 +46,20 @@ func Pick(scopes ...string) *miniProgram.MiniProgram {
 
 // provide 提供指定scope实例
 func provide(scope string) error {
+
 	conf, err := getConf(scope)
 	if err != nil {
 		return err
 	}
 	// 初始化实例
-	instance, _ := New(conf)
+	instance, err := New(conf)
+	if err != nil {
+		return fmt.Errorf("初始化MiniProgram实例错误: %w", err)
+	}
+
 	// 挂载实例
 	do.ProvideNamedValue(nil, iocPrefix+scope, instance)
+
 	return nil
 }
 

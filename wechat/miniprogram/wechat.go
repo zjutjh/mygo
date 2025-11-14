@@ -1,8 +1,6 @@
 package miniprogram
 
 import (
-	"fmt"
-
 	"github.com/ArtisanCloud/PowerLibs/v3/cache"
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/miniProgram"
 	"github.com/redis/go-redis/v9"
@@ -25,7 +23,11 @@ func New(conf Config) (*miniProgram.MiniProgram, error) {
 		gr.Pool = nedis.Pick(conf.Redis)
 		kernelCache = gr
 	} else {
-		kernelCache = cache.NewMemCache("", cache.DEFAULT_EXPIRES_IN, "")
+		kernelCache = cache.NewMemCache(
+			conf.MemCache.Prefix,
+			conf.MemCache.DefaultExpire,
+			conf.MemCache.Namespace,
+		)
 	}
 
 	mp, err := miniProgram.NewMiniProgram(&miniProgram.UserConfig{
@@ -48,7 +50,7 @@ func New(conf Config) (*miniProgram.MiniProgram, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("初始化 微信小程序 失败: %w", err)
+		return nil, nil
 	}
 
 	return mp, nil

@@ -1,8 +1,6 @@
 package miniprogram
 
-import (
-	"time"
-)
+import "time"
 
 var DefaultConfig = Config{
 	AppId:     "",
@@ -20,11 +18,19 @@ var DefaultConfig = Config{
 		Stdout: false,
 	},
 
-	Redis:       "",
+	Redis: RedisConfig{
+		Size:    0,
+		Network: "tcp",
+		Address: "127.0.0.1:6379",
+		DB:      "0",
+	},
 	EnableRedis: false,
-	MaxActive:   10,
-	MaxIdle:     10,
-	IdleTimeout: 60 * time.Second,
+
+	MemCache: MemCacheConfig{
+		Prefix:        "",
+		DefaultExpire: time.Duration(0),
+		Namespace:     "",
+	},
 }
 
 type Config struct {
@@ -40,11 +46,10 @@ type Config struct {
 	Log LogConfig `mapstructure:"log"`
 
 	//Redis配置
-	Redis       string        `mapstructure:"redis"`
-	EnableRedis bool          `mapstructure:"enable_redis"`
-	MaxActive   int           `mapstructure:"max_active"`
-	MaxIdle     int           `mapstructure:"max_idle"`
-	IdleTimeout time.Duration `mapstructure:"idle_timeout"`
+	Redis       RedisConfig `mapstructure:"redis"`
+	EnableRedis bool        `mapstructure:"enable_redis"`
+
+	MemCache MemCacheConfig `mapstructure:"mem_cache"`
 }
 
 type LogConfig struct {
@@ -52,4 +57,19 @@ type LogConfig struct {
 	File   string `mapstructure:"file"`
 	Error  string `mapstructure:"error"`
 	Stdout bool   `mapstructure:"stdout"`
+}
+
+type RedisConfig struct {
+	Size     int    `mapstructure:"size"`
+	Network  string `mapstructure:"network"`
+	Address  string `mapstructure:"address"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	DB       string `mapstructure:"db"`
+}
+
+type MemCacheConfig struct {
+	Prefix        string        `mapstructure:"prefix"`
+	DefaultExpire time.Duration `mapstructure:"default_expire"`
+	Namespace     string        `mapstructure:"namespace"`
 }
