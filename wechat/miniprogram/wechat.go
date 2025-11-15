@@ -18,16 +18,15 @@ import (
 func New(conf Config) (*miniProgram.MiniProgram, error) {
 
 	var kernelCache cache.CacheInterface
-	if conf.EnableRedis {
+	switch conf.Driver {
+	case DriverRedis:
 		gr := cache.NewGRedis(&redis.UniversalOptions{})
 		gr.Pool = nedis.Pick(conf.Redis)
 		kernelCache = gr
-	} else {
-		kernelCache = cache.NewMemCache(
-			conf.MemCache.Prefix,
-			conf.MemCache.DefaultExpire,
-			conf.MemCache.Namespace,
-		)
+	case DriverMemory:
+		kernelCache = cache.NewMemCache(conf.MemCache.Namespace, cache.DEFAULT_EXPIRES_IN, conf.MemCache.Prefix)
+	default:
+		kernelCache = cache.NewMemCache(conf.MemCache.Namespace, cache.DEFAULT_EXPIRES_IN, conf.MemCache.Prefix)
 	}
 
 	mp, err := miniProgram.NewMiniProgram(&miniProgram.UserConfig{

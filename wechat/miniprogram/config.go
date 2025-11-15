@@ -2,6 +2,11 @@ package miniprogram
 
 import "time"
 
+const (
+	DriverRedis  = "redis"
+	DriverMemory = "memory"
+)
+
 var DefaultConfig = Config{
 	AppId:     "",
 	AppSecret: "",
@@ -17,18 +22,11 @@ var DefaultConfig = Config{
 		Error:  "./logs/app.log",
 		Stdout: false,
 	},
-
-	Redis: RedisConfig{
-		Size:    0,
-		Network: "tcp",
-		Address: "127.0.0.1:6379",
-		DB:      "0",
-	},
-	EnableRedis: false,
-
+	Driver: "memory",
+	Redis:  "",
 	MemCache: MemCacheConfig{
 		Prefix:        "",
-		DefaultExpire: time.Duration(0),
+		DefaultExpire: 0,
 		Namespace:     "",
 	},
 }
@@ -44,11 +42,9 @@ type Config struct {
 	Debug     bool `mapstructure:"debug"`
 
 	Log LogConfig `mapstructure:"log"`
-
-	//Redis配置
-	Redis       RedisConfig `mapstructure:"redis"`
-	EnableRedis bool        `mapstructure:"enable_redis"`
-
+	//缓存配置
+	Driver   string         `mapstructure:"driver"`
+	Redis    string         `mapstructure:"redis"`
 	MemCache MemCacheConfig `mapstructure:"mem_cache"`
 }
 
@@ -58,16 +54,6 @@ type LogConfig struct {
 	Error  string `mapstructure:"error"`
 	Stdout bool   `mapstructure:"stdout"`
 }
-
-type RedisConfig struct {
-	Size     int    `mapstructure:"size"`
-	Network  string `mapstructure:"network"`
-	Address  string `mapstructure:"address"`
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
-	DB       string `mapstructure:"db"`
-}
-
 type MemCacheConfig struct {
 	Prefix        string        `mapstructure:"prefix"`
 	DefaultExpire time.Duration `mapstructure:"default_expire"`
