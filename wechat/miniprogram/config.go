@@ -1,6 +1,10 @@
 package miniprogram
 
-import "time"
+import (
+	"time"
+
+	"github.com/ArtisanCloud/PowerLibs/v3/cache"
+)
 
 const (
 	DriverRedis  = "redis"
@@ -26,7 +30,7 @@ var DefaultConfig = Config{
 	Redis:  "",
 	MemCache: MemCacheConfig{
 		Prefix:        "",
-		DefaultExpire: 0,
+		DefaultExpire: cache.DEFAULT_EXPIRES_IN,
 		Namespace:     "",
 	},
 }

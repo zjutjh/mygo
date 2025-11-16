@@ -9,9 +9,7 @@ import (
 
 /**
  * 使用方法请参考官方文档
- * 入门://powerwechat.artisan-cloud.com/zh/mini-program/
- * 小程序登录：https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/login.html
- * 获取用户信息：https://powerwechat.artisan-cloud.com/zh/mini-program/user-info.html
+ * https://powerwechat.artisan-cloud.com/zh/mini-program/
  */
 
 // New 创建微信服务实例
@@ -24,9 +22,9 @@ func New(conf Config) (*miniProgram.MiniProgram, error) {
 		gr.Pool = nedis.Pick(conf.Redis)
 		kernelCache = gr
 	case DriverMemory:
-		kernelCache = cache.NewMemCache(conf.MemCache.Namespace, cache.DEFAULT_EXPIRES_IN, conf.MemCache.Prefix)
+		kernelCache = cache.NewMemCache(conf.MemCache.Namespace, conf.MemCache.DefaultExpire, conf.MemCache.Prefix)
 	default:
-		kernelCache = cache.NewMemCache(conf.MemCache.Namespace, cache.DEFAULT_EXPIRES_IN, conf.MemCache.Prefix)
+		kernelCache = cache.NewMemCache(conf.MemCache.Namespace, conf.MemCache.DefaultExpire, conf.MemCache.Prefix)
 	}
 
 	mp, err := miniProgram.NewMiniProgram(&miniProgram.UserConfig{
