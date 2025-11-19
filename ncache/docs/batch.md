@@ -124,3 +124,21 @@ type BatchCache interface {
   - 行为与现有单键路径一致（负缓存、抖动、写回）。
 - 若需要高级批量合并/热点保护/写回等：可以调研第三方库的实现思路并择优吸收，避免直接替换带来迁移成本与行为差异。
 
+## 测试验证（已完工）
+
+- `ncache/batch_test.go` 使用内存层 + 自实现的 `fakeBatchLayer`（模拟 Redis 层）覆盖以下场景：
+  - `MGet` 从下层命中后回填上层，并正确返回缺失键；
+  - `MSet` 逐键写入两层，校验编码后的 payload；
+  - `MRemember` 同一次调用只触发一次 loader，命中与负缓存写回正确；
+  - 负缓存会在批量读取中被识别为 missing；
+  - `dedupeKeys` 去空去重逻辑。 
+- 测试指令：`go test ./ncache`（默认包含上述批量用例）。
+- 如需对接真实 Redis，可额外编写集成测试（需事先 Boot 对应的 nedis scope）。
+
+## 与 Redis 分布式锁的兼容性
+
+- `ncache` 通过 `nedis.Pick(scope)` 获取 Redis UniversalClient；
+- `lock` 包（基于 `redsync`）同样依赖 `nedis` 提供的客户端。两者仅共享底层 Redis 连接，不会直接冲突；
+- 需确保配置文件中给缓存和锁分配不同的 key 前缀，避免命名空间互相污染（例如在 `ncache.Config.Prefix` 中设定专用前缀）；
+- 如果在同一 Redis 实例下使用，两者连接数、命令超时等参数统一由 nedis 配置控制。 
+
