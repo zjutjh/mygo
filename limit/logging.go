@@ -19,7 +19,7 @@ func (l *loggingLimiter) Allow(ctx context.Context, key string, limit int, burst
 			"module": "limit",
 			"key":    key,
 			"error":  err,
-		}).Errorf("limit: check failed [key: %s]", key) // 错误级别日志
+		}).Errorf("limit: 检查失败 [key: %s]", key) // 错误级别日志
 		return allowed, retry, err
 	}
 
@@ -30,7 +30,7 @@ func (l *loggingLimiter) Allow(ctx context.Context, key string, limit int, burst
 			"limit":       limit,
 			"burst":       burst,
 			"retry_after": retry.String(),
-		}).Warnf("limit: rate limit exceeded [key: %s]", key) // 警告级别日志
+		}).Warnf("limit: 请求超出速率限制 [key: %s]", key) // 警告级别日志
 	}
 
 	return allowed, retry, nil
