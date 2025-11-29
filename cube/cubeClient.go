@@ -3,11 +3,11 @@ package cube
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
-	"time"
-	"net/url"
 	"strings"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -19,42 +19,42 @@ type CubeClient struct {
 	Resty  *resty.Client
 }
 
-// NewClient 是客户端的工厂函数。
+// NewClient 是客户端的工厂函数
 func NewClient(cfg *CubeConfig) *CubeClient {
-	
-	// 处理 nil 配置，使用正确的 TimeoutSeconds 字段
-    if cfg == nil {
-        cfg = &CubeConfig{TimeoutSeconds: 10} // 使用 Int 秒数作为默认值
-    }
+
+	// 处理 nil 配置
+	if cfg == nil {
+		cfg = &CubeConfig{TimeoutSeconds: 10} // 使用 Int 秒数作为默认值
+	}
 	// 确保 BaseURL 已配置
 	if cfg.BaseURL == "" {
-    panic("cube: BaseURL 未配置")
+		panic("cube: BaseURL 未配置")
 	}
 
-    // 确保 TimeoutSeconds 不为零
-    if cfg.TimeoutSeconds <= 0 {
-        cfg.TimeoutSeconds = 10
-    }
-    
-    // 将秒数转换为 time.Duration 供 SetTimeout 使用 (无需再赋值给 cfg)
-    timeoutDuration := time.Duration(cfg.TimeoutSeconds) * time.Second
-    
-    restyClient := resty.New()
+	// 确保 TimeoutSeconds 不为零
+	if cfg.TimeoutSeconds <= 0 {
+		cfg.TimeoutSeconds = 10
+	}
 
-    // 应用基础配置
-    restyClient.SetBaseURL(cfg.BaseURL).
-        SetTimeout(timeoutDuration). // 使用转换后的 Duration
-        SetDebug(cfg.Debug).
-        SetHeader("Key", cfg.APIKey)
+	// 将秒数转换为 time.Duration 供 SetTimeout 使用
+	timeoutDuration := time.Duration(cfg.TimeoutSeconds) * time.Second
 
-    client := &CubeClient{
-        Config: cfg,
-        Resty:  restyClient,
-    }
+	restyClient := resty.New()
 
-    return client
+	// 应用基础配置
+	restyClient.SetBaseURL(cfg.BaseURL).
+		SetTimeout(timeoutDuration). // 使用转换后的 Duration
+		SetHeader("Key", cfg.APIKey)
+
+	client := &CubeClient{
+		Config: cfg,
+		Resty:  restyClient,
+	}
+
+	return client
 }
-// UploadFile 上传文件到存储立方。
+
+// UploadFile 上传文件到存储立方
 func (c *CubeClient) UploadFile(
 	localPath string,
 	location string,
@@ -72,7 +72,7 @@ func (c *CubeClient) UploadFile(
 		return "", fmt.Errorf("无法开启本地文档: %w", err)
 	}
 	defer file.Close()
-    
+
 	fileName := filepath.Base(localPath)
 
 	// 构建 Multipart/Form-Data 请求
@@ -85,35 +85,49 @@ func (c *CubeClient) UploadFile(
 			"use_uuid":     fmt.Sprintf("%v", useUuid),     // boolean 转换为 string
 		}).
 		SetResult(&result)
-
 	if location != "" {
-		req.SetFormData(map[string]string{"location": location}) 
+		req.SetFormData(map[string]string{"location": location})
 	}
 
 	// 发送 POST 请求
-	resp, err := req.Post("/api/upload") // 对应 Java 的 .uri("/api/upload")
+	resp, err := req.Post("/api/upload")
 
 	if err != nil {
-		return "", fmt.Errorf("Cube 客户端请求失败: %w", err)
-	}
-    
-	if resp.IsError() {
-		return "", fmt.Errorf("Cube HTTP 错误: %s (Status: %d)", resp.Status(), resp.StatusCode())
+		return "", fmt.Errorf("cube 客户端请求失败: %w", err)
 	}
 
-	// 检查业务错误 
+	// 错误捕获
+
+	// 检查是否有 HTTP 错误
+	if resp.IsError() {
+		return "", fmt.Errorf("cube HTTP 错误: %s (Status: %d). Response Body: %s",
+			resp.Status(), resp.StatusCode(), resp.String()) // 打印响应体，帮助调试
+	}
+
+	// 检查是否有 JSON 解析错误（仅当 HTTP 状态码为成功时）
+	if resp.IsSuccess() && resp.Error() != nil {
+		// resp.Error() 返回一个错误对象，指示 SetResult() 失败
+		return "", fmt.Errorf("cube 响应体JSON解析失败: %v. Response Body: %s",
+			resp.Error(), resp.String())
+	}
+
+	if resp.IsError() {
+		return "", fmt.Errorf("cube HTTP 错误: %s (Status: %d)", resp.Status(), resp.StatusCode())
+	}
+
+	// 检查业务错误
 	if result.Code != 200 {
 		return "", NewCubeError(result.Code, result.Msg)
 	}
 
-	objKey := result.GetObjectKey() // 统一访问
+	objKey := result.Data.ObjectKey
 	if objKey == "" {
 		return "", NewCubeError(200500, "上传成功但 ObjectKey 缺失")
 	}
 	return objKey, nil
 }
 
-// DeleteFile 删除文件。
+// DeleteFile 删除文件
 func (c *CubeClient) DeleteFile(objectKey string) error {
 	bucketName := c.Config.DefaultBucketName
 	if bucketName == "" {
@@ -125,17 +139,16 @@ func (c *CubeClient) DeleteFile(objectKey string) error {
 	resp, err := c.Resty.R().
 		SetQueryParams(map[string]string{
 			"bucket":     bucketName,
-			"object_key": objectKey, 
+			"object_key": objectKey,
 		}).
 		SetResult(&result).
-		Delete("/api/delete") 
-
+		Delete("/api/delete")
 	if err != nil {
-		return fmt.Errorf("Cube 客户端删除请求失败: %w", err)
+		return fmt.Errorf("cube 客户端删除请求失败: %w", err)
 	}
 
 	if resp.IsError() {
-		return fmt.Errorf("Cube HTTP 错误: %s (Status: %d)", resp.Status(), resp.StatusCode())
+		return fmt.Errorf("cube HTTP 错误: %s (Status: %d)", resp.Status(), resp.StatusCode())
 	}
 
 	// 检查业务 code
@@ -146,14 +159,14 @@ func (c *CubeClient) DeleteFile(objectKey string) error {
 	return nil
 }
 
-// GetFileUrl 拼接获取文件的 URL。
+// GetFileUrl 拼接获取文件的 URL
 func (c *CubeClient) GetFileUrl(objectKey string, thumbnail bool) string {
 	// 使用 Go 标准库 net/url 的 QueryEscape 对 objectKey 进行 URL 编码
-	encodedKey := url.QueryEscape(objectKey) 
+	encodedKey := url.QueryEscape(objectKey)
 	baseUrl := strings.TrimRight(c.Config.BaseURL, "/")
-	finalUrl := fmt.Sprintf("%s/api/file?bucket=%s&object_key=%s", 
-		baseUrl, 
-		c.Config.DefaultBucketName, 
+	finalUrl := fmt.Sprintf("%s/api/file?bucket=%s&object_key=%s",
+		baseUrl,
+		c.Config.DefaultBucketName,
 		encodedKey)
 
 	if thumbnail {
