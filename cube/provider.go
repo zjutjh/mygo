@@ -54,10 +54,7 @@ func provide(scope string) error {
 	}
 
 	// 初始化实例
-	client, err := NewCubeClient(&conf, nil)
-	if err != nil {
-		return err
-	}
+	client := New(conf)
 
 	// 挂载实例
 	do.ProvideNamedValue(nil, iocPrefix+scope, client)
