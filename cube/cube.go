@@ -67,7 +67,10 @@ func (c *CubeClient) UploadFile(ctx context.Context, filename string, reader io.
 		return nil, fmt.Errorf("上传文件请求错误: %w", err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("上传文件消息状态码错误: %v", resp.StatusCode())
+		return nil, fmt.Errorf("%w: 上传文件消息状态码错误: %v", kit.ErrHttpStatusCodeNotOK, resp.StatusCode())
+	}
+	if result.Code != 200 {
+		return &result, fmt.Errorf("%w: 上传文件业务状态码错误: %v", kit.ErrRequestBizCodeNotOK, result.Code)
 	}
 	return &result, nil
 }
@@ -92,7 +95,10 @@ func (c *CubeClient) DeleteFile(objectKey string) (*DeleteResponse, error) {
 		return nil, fmt.Errorf("删除文件请求错误: %w", err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("删除文件消息状态码错误: %v", resp.StatusCode())
+		return nil, fmt.Errorf("%w: 删除文件消息状态码错误: %v", kit.ErrHttpStatusCodeNotOK, resp.StatusCode())
+	}
+	if result.Code != 200 {
+		return &result, fmt.Errorf("%w: 删除文件业务状态码错误: %v", kit.ErrRequestBizCodeNotOK, result.Code)
 	}
 	return &result, nil
 }
