@@ -1,4 +1,4 @@
-package officialAccount
+package miniProgram
 
 import (
 	"time"
@@ -10,20 +10,22 @@ const (
 )
 
 var DefaultConfig = Config{
-	AppID:           "",
-	Secret:          "",
-	Token:           "",
-	AESKey:          "",
-	StableTokenMode: false,
-	ForceRefresh:    false,
-	RefreshToken:    "",
+	AppID:  "",
+	Secret: "",
 
+	AppKey:  "",
+	OfferID: "",
+
+	Token:             "",
+	AESKey:            "",
 	ComponentAppID:    "",
 	ComponentAppToken: "",
+	StableTokenMode:   false,
+	RefreshToken:      "",
 
 	ResponseType: "",
 	Http: HttpConfig{
-		Timeout:  5.0,
+		Timeout:  0,
 		BaseURI:  "https://api.weixin.qq.com/",
 		ProxyURI: "",
 	},
@@ -39,35 +41,31 @@ var DefaultConfig = Config{
 	HttpDebug: false,
 	Debug:     false,
 
-	OAuth: OAuthConfig{
-		Scopes:   []string{},
-		Callback: "",
-	},
-
 	Log:   "",
 	Resty: "",
 	Redis: "",
 }
 
 type Config struct {
-	AppID           string `mapstructure:"app_id"`
-	Secret          string `mapstructure:"secret"`
-	Token           string `mapstructure:"token"`
-	AESKey          string `mapstructure:"aes_key"`
-	StableTokenMode bool   `mapstructure:"stable_token_mode"`
-	ForceRefresh    bool   `mapstructure:"force_refresh"`
-	RefreshToken    string `mapstructure:"refresh_token"`
+	AppID  string `mapstructure:"app_id"`
+	Secret string `mapstructure:"secret"`
 
+	AppKey  string `mapstructure:"app_key"`
+	OfferID string `mapstructure:"offer_id"`
+
+	Token             string `mapstructure:"token"`
+	AESKey            string `mapstructure:"aes_key"`
 	ComponentAppID    string `mapstructure:"component_app_id"`
 	ComponentAppToken string `mapstructure:"component_app_token"`
+	StableTokenMode   bool   `mapstructure:"stable_token_mode"`
+	RefreshToken      string `mapstructure:"refresh_token"`
 
 	ResponseType string      `mapstructure:"response_type"`
 	Http         HttpConfig  `mapstructure:"http"`
 	Cache        CacheConfig `mapstructure:"cache"`
-	HttpDebug    bool        `mapstructure:"http_debug"`
-	Debug        bool        `mapstructure:"debug"`
 
-	OAuth OAuthConfig
+	HttpDebug bool `mapstructure:"http_debug"`
+	Debug     bool `mapstructure:"debug"`
 
 	// 基础依赖组件实例配置
 	Log   string `mapstructure:"log"`
@@ -90,9 +88,4 @@ type MemCacheConfig struct {
 	Namespace       string        `mapstructure:"namespace"`
 	DefaultLifeTime time.Duration `mapstructure:"default_life_time"`
 	Prefix          string        `mapstructure:"prefix"`
-}
-
-type OAuthConfig struct {
-	Scopes   []string `mapstructure:"scopes"`
-	Callback string   `mapstructure:"callback"`
 }

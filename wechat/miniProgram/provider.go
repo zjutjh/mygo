@@ -1,4 +1,4 @@
-package miniprogram
+package miniProgram
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/samber/do"
 	"github.com/zjutjh/mygo/config"
+	"github.com/zjutjh/mygo/kit"
 )
 
 const (
@@ -14,7 +15,7 @@ const (
 	defaultScope = "wechat_mini_program"
 )
 
-// Boot 预加载默认实例
+// Boot 预加载默认实例 同时加载指定实例列表
 func Boot(scopes ...string) func() error {
 	return func() error {
 		if err := provide(defaultScope); err != nil {
@@ -46,11 +47,12 @@ func Pick(scopes ...string) *miniProgram.MiniProgram {
 
 // provide 提供指定scope实例
 func provide(scope string) error {
-
+	// 获取配置
 	conf, err := getConf(scope)
 	if err != nil {
 		return err
 	}
+
 	// 初始化实例
 	instance, err := New(conf)
 	if err != nil {
@@ -63,20 +65,22 @@ func provide(scope string) error {
 	return nil
 }
 
+// getConf 获取配置
 func getConf(scope string) (conf Config, err error) {
 	// 初始化默认配置
 	conf, err = defaultConfig()
 	if err != nil {
 		return conf, err
 	}
-	//判断 scope 配置是否存在
+	// 判断 scope 配置是否存在
 	cfg := config.Pick()
 	if !cfg.IsSet(scope) {
-		return conf, fmt.Errorf("配置[%s]不存在", scope)
+		return conf, fmt.Errorf("%w: 配置config.yaml[%s]不存在", kit.ErrNotFound, scope)
 	}
-	//解析配置
-	if err := cfg.UnmarshalKey(scope, &conf); err != nil {
-		return conf, fmt.Errorf("解析配置[%s]错误: %w", scope, err)
+	// 解析 config.yaml[{scope}]
+	err = cfg.UnmarshalKey(scope, &conf)
+	if err != nil {
+		return conf, fmt.Errorf("%w: 解析config.yaml[%s]错误: %w", kit.ErrDataUnmarshal, scope, err)
 	}
 	return conf, nil
 }
