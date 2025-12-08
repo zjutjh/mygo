@@ -1,4 +1,4 @@
-package mongo
+package ngodb
 
 import (
 	"context"
@@ -9,13 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-type DB struct {
-	Client   *mongo.Client
-	Config   Config
-	Database *mongo.Database
-}
-
-func New(conf Config) (*DB, error) {
+func New(conf Config) (*mongo.Database, error) {
 	clientOptions := options.Client().
 		SetHosts([]string{fmt.Sprintf("%s:%d", conf.Host, conf.Port)}).
 		SetConnectTimeout(conf.ConnectTimeout).
@@ -41,7 +35,7 @@ func New(conf Config) (*DB, error) {
 		})
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), conf.ConnectTimeout)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	client, err := mongo.Connect(ctx, clientOptions)
@@ -50,7 +44,7 @@ func New(conf Config) (*DB, error) {
 	}
 
 	// 测试连接
-	ctx, cancel = context.WithTimeout(context.Background(), conf.ServerSelectionTimeout)
+	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 	//失败断开连接
 	if err = client.Ping(ctx, readpref.Primary()); err != nil {
@@ -58,13 +52,10 @@ func New(conf Config) (*DB, error) {
 		return nil, fmt.Errorf("MongoDB连接测试失败: %w", err)
 	}
 
-	db := &DB{
-		Client: client,
-		Config: conf,
-	}
-	//初始化Database对象
+	var db *mongo.Database
+
 	if conf.Database != "" {
-		db.Database = client.Database(conf.Database)
+		db = client.Database(conf.Database)
 	}
 
 	return db, nil

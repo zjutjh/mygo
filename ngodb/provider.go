@@ -1,4 +1,4 @@
-package mongo
+package ngodb
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"github.com/samber/do"
 	"github.com/zjutjh/mygo/config"
 	"github.com/zjutjh/mygo/kit"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 const (
@@ -31,17 +32,17 @@ func Boot(scopes ...string) func() error {
 
 // Exist 判断scope实例是否挂载 (被Boot过) 且类型正确
 func Exist(scope string) bool {
-	_, err := do.InvokeNamed[*DB](nil, iocPrefix+scope)
+	_, err := do.InvokeNamed[*mongo.Database](nil, iocPrefix+scope)
 	return err == nil
 }
 
 // Pick 获取指定scope实例
-func Pick(scopes ...string) *DB {
+func Pick(scopes ...string) *mongo.Database {
 	scope := defaultScope
 	if len(scopes) != 0 && scopes[0] != "" {
 		scope = scopes[0]
 	}
-	return do.MustInvokeNamed[*DB](nil, iocPrefix+scope)
+	return do.MustInvokeNamed[*mongo.Database](nil, iocPrefix+scope)
 }
 
 // provide 提供指定scope实例
