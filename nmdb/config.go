@@ -1,4 +1,4 @@
-package ngodb
+package nmdb
 
 import (
 	"time"
