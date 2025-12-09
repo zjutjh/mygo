@@ -35,8 +35,7 @@ func New(conf Config) (*mongo.Database, error) {
 		})
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
@@ -44,8 +43,8 @@ func New(conf Config) (*mongo.Database, error) {
 	}
 
 	// 测试连接
-	ctx, cancel = context.WithCancel(context.Background())
-	defer cancel()
+	ctx = context.Background()
+
 	//失败断开连接
 	if err = client.Ping(ctx, readpref.Primary()); err != nil {
 		_ = client.Disconnect(context.Background())
