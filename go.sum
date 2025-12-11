@@ -6,8 +6,6 @@ github.com/ArtisanCloud/PowerSocialite/v3 v3.0.9 h1:ItdVnpav2gmYdf3kM9wiXXoQwn+F
 github.com/ArtisanCloud/PowerSocialite/v3 v3.0.9/go.mod h1:VZQNCvcK/rldF3QaExiSl1gJEAkyc5/I8RLOd3WFZq4=
 github.com/ArtisanCloud/PowerWeChat/v3 v3.4.28 h1:W+dgJySs17007vUvPEODk3PMt6e0KpyAdclKBUDbb2c=
 github.com/ArtisanCloud/PowerWeChat/v3 v3.4.28/go.mod h1:boWl2cwbgXt1AbrYTWMXs9Ebby6ecbJ1CyNVRaNVqUY=
-github.com/boj/redistore v1.4.1 h1:lP9ZZWqKMq2RIqexlZX1w1ODSnegL+puxGIujkU5tIw=
-github.com/boj/redistore v1.4.1/go.mod h1:c0Tvw6aMjslog4jHIAcNv6EtJM849YoOAhMY7JBbWpI=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
 github.com/bsm/ginkgo/v2 v2.12.0/go.mod h1:SwYbGRRDovPVboqFv0tPTcG1sN61LM1Z4ARdbAV9g4c=
 github.com/bsm/gomega v1.27.10 h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=

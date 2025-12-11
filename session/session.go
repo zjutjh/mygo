@@ -5,12 +5,13 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
-	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 
 	"github.com/zjutjh/mygo/config"
 	"github.com/zjutjh/mygo/kit"
+	"github.com/zjutjh/mygo/nedis"
+	"github.com/zjutjh/mygo/session/redis"
 )
 
 const defaultConfigKey = "session"
@@ -42,14 +43,8 @@ func Pick(keys ...string) gin.HandlerFunc {
 	switch conf.Driver {
 	case DriverRedis:
 		var err error
-		store, err = redis.NewStoreWithDB(
-			conf.Redis.Size,
-			conf.Redis.Network,
-			conf.Redis.Address,
-			conf.Redis.Username,
-			conf.Redis.Password,
-			conf.Redis.DB,
-			keyPairs)
+		rdb := nedis.Pick(conf.Redis)
+		store, err = redis.NewStore(rdb, keyPairs)
 		if err != nil {
 			panic(err)
 		}
@@ -66,6 +61,7 @@ func Pick(keys ...string) gin.HandlerFunc {
 		HttpOnly: conf.HttpOnly,
 		SameSite: conf.SameSite,
 	})
+
 	return sessions.Sessions(conf.Name, store)
 }
 
