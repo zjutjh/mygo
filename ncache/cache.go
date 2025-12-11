@@ -36,8 +36,8 @@ func New(opts ...Option) CacheManager {
 	}
 
 	// 初始化 Memory Store (L1 缓存)
-	gocacheClient := gocache.New(5*time.Minute, 10*time.Minute)
-	memoryStore := gocache_store.NewGoCache(gocacheClient)
+	goCacheClient := gocache.New(5*time.Minute, 10*time.Minute)
+	memoryStore := gocache_store.NewGoCache(goCacheClient)
 	memoryCache := cache.New[any](memoryStore)
 
 	var cacheInstance cache.CacheInterface[any]
