@@ -1,6 +1,6 @@
 module github.com/zjutjh/mygo
 
-go 1.25
+go 1.24.7
 
 require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2
