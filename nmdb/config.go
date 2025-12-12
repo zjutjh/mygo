@@ -5,8 +5,7 @@ import (
 )
 
 var DefaultConfig = Config{
-	Host:     "localhost",
-	Port:     27017,
+	Host:     []string{"localhost:27017"},
 	Username: "",
 	Password: "",
 	Database: "",
@@ -30,12 +29,11 @@ var DefaultConfig = Config{
 }
 
 type Config struct {
-	Host     string `mapstructure:"host"`
-	Port     int    `mapstructure:"port"`
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
-	Database string `mapstructure:"database"`
-	AuthDB   string `mapstructure:"auth_db"`
+	Host     []string `mapstructure:"host"`
+	Username string   `mapstructure:"username"`
+	Password string   `mapstructure:"password"`
+	Database string   `mapstructure:"database"`
+	AuthDB   string   `mapstructure:"auth_db"`
 
 	// 连接配置
 	ConnectTimeout         time.Duration `mapstructure:"connect_timeout"`
