@@ -112,9 +112,11 @@ func accessLoggerFormatter() gin.LogFormatter {
 			"client_ip":   param.ClientIP,
 			"query":       param.Request.URL.Query(),
 			"header":      param.Request.Header,
-			"error":       param.ErrorMessage,
 			"latency":     param.Latency.String(),
 			"status_code": param.StatusCode,
+		}
+		if param.ErrorMessage != "" {
+			data["error"] = param.ErrorMessage
 		}
 		db, _ := json.Marshal(data)
 		return fmt.Sprintf("%s\n", string(db))
