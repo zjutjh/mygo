@@ -9,6 +9,10 @@ var DefaultConfig = Config{
 
 	Pprof: false,
 
+	H2C: H2CConfig{
+		Enable: true,
+	},
+
 	Log: LogConfig{
 		AccessFilename: "./logs/access.log",
 		ErrorFilename:  "./logs/error.log",
@@ -28,8 +32,15 @@ type Config struct {
 
 	Pprof bool `mapstructure:"pprof"`
 
+	H2C H2CConfig `mapstructure:"h2c"`
+
 	Log LogConfig `mapstructure:"log"`
 	// Gin GinConfig `mapstructure:"gin"`
+}
+
+// H2CConfig 明文 HTTP/2 配置
+type H2CConfig struct {
+	Enable bool `mapstructure:"enable"`
 }
 
 type LogConfig struct {

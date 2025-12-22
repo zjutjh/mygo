@@ -14,6 +14,8 @@ import (
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 
 	"github.com/zjutjh/mygo/config"
 	"github.com/zjutjh/mygo/feishu"
@@ -139,9 +141,16 @@ func recoveryHandler(ctx *gin.Context, err any) {
 }
 
 func initHTTPServer(e *gin.Engine, conf Config) *http.Server {
+	var handler http.Handler = e
+
+	if conf.H2C.Enable {
+		h2s := &http2.Server{}
+		handler = h2c.NewHandler(e, h2s)
+	}
+
 	return &http.Server{
 		Addr:    conf.Addr,
-		Handler: e,
+		Handler: handler,
 	}
 }
 
