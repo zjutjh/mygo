@@ -14,7 +14,6 @@ import (
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
-
 	"github.com/zjutjh/mygo/config"
 	"github.com/zjutjh/mygo/feishu"
 	"github.com/zjutjh/mygo/foundation/kernel"
@@ -75,6 +74,7 @@ func initGinEngine(conf Config) (*gin.Engine, error) {
 	engine := gin.New()
 
 	// 设置gin参数 有需要时再补充
+	engine.UseH2C = conf.Gin.UseH2C
 	// engine.RedirectTrailingSlash = conf.Gin.RedirectTrailingSlash
 	// ......
 
@@ -141,7 +141,7 @@ func recoveryHandler(ctx *gin.Context, err any) {
 func initHTTPServer(e *gin.Engine, conf Config) *http.Server {
 	return &http.Server{
 		Addr:    conf.Addr,
-		Handler: e,
+		Handler: e.Handler(),
 	}
 }
 
