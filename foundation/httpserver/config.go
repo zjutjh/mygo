@@ -9,10 +9,6 @@ var DefaultConfig = Config{
 
 	Pprof: false,
 
-	H2C: H2CConfig{
-		Enable: true,
-	},
-
 	Log: LogConfig{
 		AccessFilename: "./logs/access.log",
 		ErrorFilename:  "./logs/error.log",
@@ -22,7 +18,10 @@ var DefaultConfig = Config{
 		LocalTime:      false,
 		Compress:       false,
 	},
-	// Gin: GinConfig{},
+
+	Gin: GinConfig{
+		UseH2C: false,
+	},
 }
 
 type Config struct {
@@ -32,15 +31,9 @@ type Config struct {
 
 	Pprof bool `mapstructure:"pprof"`
 
-	H2C H2CConfig `mapstructure:"h2c"`
-
 	Log LogConfig `mapstructure:"log"`
-	// Gin GinConfig `mapstructure:"gin"`
-}
 
-// H2CConfig 明文 HTTP/2 配置
-type H2CConfig struct {
-	Enable bool `mapstructure:"enable"`
+	Gin GinConfig `mapstructure:"gin"`
 }
 
 type LogConfig struct {
@@ -55,6 +48,6 @@ type LogConfig struct {
 
 // Gin配置 有需要时再补充
 type GinConfig struct {
-	// RedirectTrailingSlash bool `mapstructure:"redirect_trailing_slash"`
+	UseH2C bool `mapstructure:"use_h2c"`
 	// ......
 }
