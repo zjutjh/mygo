@@ -2,6 +2,8 @@ package nmdb
 
 import (
 	"time"
+
+	"gorm.io/gorm/logger"
 )
 
 var DefaultConfig = Config{
@@ -26,6 +28,13 @@ var DefaultConfig = Config{
 	Direct:      false,
 	RetryWrites: true,
 	RetryReads:  true,
+
+	OpenLogger:                true,
+	Log:                       "",
+	SlowThreshold:             200 * time.Millisecond,
+	Colorful:                  false,
+	IgnoreRecordNotFoundError: true,
+	LogLevel:                  logger.Warn,
 }
 
 type Config struct {
@@ -52,4 +61,11 @@ type Config struct {
 	ReplicaSet  string   `mapstructure:"replica_set"`
 	AppName     string   `mapstructure:"app_name"`
 	Compressors []string `mapstructure:"compressors"`
+
+	OpenLogger                bool            `mapstructure:"open_logger"`
+	Log                       string          `mapstructure:"log"`
+	SlowThreshold             time.Duration   `mapstructure:"slow_threshold"`
+	Colorful                  bool            `mapstructure:"colorful"`
+	IgnoreRecordNotFoundError bool            `mapstructure:"ignore_record_not_found_error"`
+	LogLevel                  logger.LogLevel `mapstructure:"log_level"`
 }
