@@ -5,6 +5,7 @@ import (
 	"mime/multipart"
 	"reflect"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/zjutjh/mygo/kit"
@@ -127,6 +128,26 @@ type commResponse struct {
 	Message string `json:"message"`
 }
 
+func hasSwaggerOption(sf reflect.StructField, option string) bool {
+	tag := sf.Tag.Get("swagger")
+	if tag == "" {
+		return false
+	}
+	for _, s := range strings.Split(tag, ",") {
+		if strings.TrimSpace(s) == option {
+			return true
+		}
+	}
+	return false
+}
+
+func nullProperty(desc string) *Property {
+	return &Property{
+		Description: desc,
+		Type:        "null",
+	}
+}
+
 func ParseApiStandResponse(t reflect.Type, businessStatusCodes []kit.Code) Response {
 	standResponse := Response{}
 	t1, exist := t.FieldByName("Response")
@@ -141,19 +162,25 @@ func ParseApiStandResponse(t reflect.Type, businessStatusCodes []kit.Code) Respo
 		Description: "业务响应Message",
 		Type:        "string",
 	}
+	dataNullOnly := hasSwaggerOption(t1, "null")
+
 	var dataProperty *Property
-	switch t1.Type.Kind() {
-	case reflect.Struct:
-		dataProperty = Struct(t1.Type, "业务响应Data", "json")
-	case reflect.Slice, reflect.Array:
-		dataProperty = Array(t1.Type, "业务响应Data", "json")
-	case reflect.Interface:
-		dataProperty = StructEmpty(t1.Type, "业务响应Data", "json")
-	case reflect.Map:
-		dataProperty = StructEmpty(t1.Type, "业务响应Data", "json")
-	default:
-		Output("不支持的Response类型[%s]\n", t1.Type.Kind())
-		return standResponse
+	if dataNullOnly {
+		dataProperty = nullProperty("业务响应Data")
+	} else {
+		switch t1.Type.Kind() {
+		case reflect.Struct:
+			dataProperty = Struct(t1.Type, "业务响应Data", "json")
+		case reflect.Slice, reflect.Array:
+			dataProperty = Array(t1.Type, "业务响应Data", "json")
+		case reflect.Interface:
+			dataProperty = StructEmpty(t1.Type, "业务响应Data", "json")
+		case reflect.Map:
+			dataProperty = StructEmpty(t1.Type, "业务响应Data", "json")
+		default:
+			Output("不支持的Response类型[%s]\n", t1.Type.Kind())
+			return standResponse
+		}
 	}
 	standProperty := Property{
 		Properties: map[string]*Property{
