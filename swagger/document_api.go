@@ -144,7 +144,7 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 		// 项目服务实例信息
 		// projectKey := "API Document"
 		servers := []Server{}
-		config.Pick().UnmarshalKey("openapi.servers", &servers)
+		_ = config.Pick().UnmarshalKey("openapi.servers", &servers)
 		openapi := OpenAPI{
 			Openapi: "3.1.0",
 			Info: Info{
@@ -200,7 +200,7 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 
 			// 获取api的type、value反射
 			t := reflect.TypeOf(api)
-			//v := reflect.ValueOf(api)
+			// v := reflect.ValueOf(api)
 
 			// 获取接口name、description、summary
 			d, ok := t.FieldByName("Info")

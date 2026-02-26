@@ -31,29 +31,29 @@ func Binding(sf reflect.StructField) []string {
 	return strings.Split(binding, ",")
 }
 
-func Required(sf reflect.StructField) bool {
+func RequestRequired(sf reflect.StructField) bool {
 	bindingList := strings.SplitSeq(sf.Tag.Get("binding"), ",")
 	for binding := range bindingList {
 		if binding == "required" {
 			return true
 		}
 	}
+	return false
+}
 
+func ResponseRequired(sf reflect.StructField) bool {
 	jsonTag := sf.Tag.Get("json")
 	if jsonTag == "-" {
 		return false
 	}
 
-	if jsonTag != "" {
-		jsonList := strings.SplitSeq(jsonTag, ",")
-		for part := range jsonList {
-			if part == "omitempty" {
-				return false
-			}
+	jsonList := strings.SplitSeq(jsonTag, ",")
+	for part := range jsonList {
+		if part == "omitempty" {
+			return false
 		}
-		return true
 	}
-	return false
+	return true
 }
 
 func LEN(binding string, property *Property, kind reflect.Kind) bool {

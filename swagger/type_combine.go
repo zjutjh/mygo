@@ -16,7 +16,7 @@ func StructEmpty(t reflect.Type, desc string, nameKey string) *Property {
 	return property
 }
 
-func Struct(t reflect.Type, desc string, nameKey string) *Property {
+func Struct(t reflect.Type, desc string, nameKey string, requiredFunc func(reflect.StructField) bool) *Property {
 	property := &Property{
 		Properties:  make(map[string]*Property),
 		Description: desc,
@@ -30,34 +30,33 @@ func Struct(t reflect.Type, desc string, nameKey string) *Property {
 	structstart:
 		switch txt.Kind() {
 		case reflect.Bool:
-			property.Properties[Name(tx, nameKey)], required = Boolean(txt, Desc(tx)), Required(tx)
+			property.Properties[Name(tx, nameKey)], required = Boolean(txt, Desc(tx)), requiredFunc(tx)
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			property.Properties[Name(tx, nameKey)], required = IntegerTag(tx, Integer(txt, Desc(tx))), Required(tx)
+			property.Properties[Name(tx, nameKey)], required = IntegerTag(tx, Integer(txt, Desc(tx))), requiredFunc(tx)
 		case reflect.Float32, reflect.Float64:
-			property.Properties[Name(tx, nameKey)], required = NumberTag(tx, Number(txt, Desc(tx))), Required(tx)
+			property.Properties[Name(tx, nameKey)], required = NumberTag(tx, Number(txt, Desc(tx))), requiredFunc(tx)
 		case reflect.String:
-			property.Properties[Name(tx, nameKey)], required = StringTag(tx, String(txt, Desc(tx))), Required(tx)
+			property.Properties[Name(tx, nameKey)], required = StringTag(tx, String(txt, Desc(tx))), requiredFunc(tx)
 		case reflect.Array, reflect.Slice:
-			property.Properties[Name(tx, nameKey)], required = ArrayTag(tx, Array(txt, Desc(tx), nameKey)), Required(tx)
+			property.Properties[Name(tx, nameKey)], required = ArrayTag(tx, Array(txt, Desc(tx), nameKey, requiredFunc)), requiredFunc(tx)
 		case reflect.Struct:
 			if tx.Type == reflect.TypeOf(time.Time{}) {
-				property.Properties[Name(tx, nameKey)], required = Time(txt, Desc(tx)), Required(tx)
+				property.Properties[Name(tx, nameKey)], required = Time(txt, Desc(tx)), requiredFunc(tx)
 			} else if tx.Type == reflect.TypeOf(multipart.FileHeader{}) {
 				Output("不支持的响应类型[multipart.FileHeader]\n")
 			} else if tx.Anonymous {
-				// 如果是匿名结构体，不需要生成结构体采用平铺的方式展示字段
-				op := Struct(txt, Desc(tx), nameKey)
+				op := Struct(txt, Desc(tx), nameKey, requiredFunc)
 				for k, v := range op.Properties {
 					property.Properties[k] = v
 				}
 				property.Required = append(property.Required, property.Required...)
 			} else {
-				property.Properties[Name(tx, nameKey)], required = Struct(txt, Desc(tx), nameKey), Required(tx)
+				property.Properties[Name(tx, nameKey)], required = Struct(txt, Desc(tx), nameKey, requiredFunc), requiredFunc(tx)
 			}
 		case reflect.Interface:
-			property.Properties[Name(tx, nameKey)], required = StructEmpty(txt, Desc(tx), nameKey), Required(tx)
+			property.Properties[Name(tx, nameKey)], required = StructEmpty(txt, Desc(tx), nameKey), requiredFunc(tx)
 		case reflect.Map:
-			property.Properties[Name(tx, nameKey)], required = StructEmpty(txt, Desc(tx), nameKey), Required(tx)
+			property.Properties[Name(tx, nameKey)], required = StructEmpty(txt, Desc(tx), nameKey), requiredFunc(tx)
 		case reflect.Uintptr:
 			Output("不支持的响应类型[%s]\n", txt.Kind())
 		case reflect.Pointer:
@@ -78,7 +77,7 @@ func Struct(t reflect.Type, desc string, nameKey string) *Property {
 	return property
 }
 
-func Array(t reflect.Type, desc string, nameKey string) *Property {
+func Array(t reflect.Type, desc string, nameKey string, requiredFunc func(reflect.StructField) bool) *Property {
 	property := &Property{
 		Items:       nil,
 		Description: desc,
@@ -102,9 +101,9 @@ arraystart:
 	case reflect.String:
 		property.Items = String(t.Elem(), "["+itemKind.String()+"]子项信息")
 	case reflect.Array, reflect.Slice:
-		property.Items = Array(t.Elem(), "["+itemKind.String()+"]子项信息", nameKey)
+		property.Items = Array(t.Elem(), "["+itemKind.String()+"]子项信息", nameKey, requiredFunc)
 	case reflect.Struct:
-		property.Items = Struct(t.Elem(), "["+itemKind.String()+"]子项信息", nameKey)
+		property.Items = Struct(t.Elem(), "["+itemKind.String()+"]子项信息", nameKey, requiredFunc)
 	case reflect.Interface:
 		property.Items = StructEmpty(t.Elem(), "["+itemKind.String()+"]子项信息", nameKey)
 	case reflect.Map:

@@ -32,7 +32,7 @@ func getRequestFields(t reflect.Type, validatePos, in string) []Parameter {
 			Name:        tx.Tag.Get(validatePos),
 			In:          in,
 			Description: Desc(tx),
-			Required:    Required(tx),
+			Required:    RequestRequired(tx),
 		}
 		var property *Property
 		txt := tx.Type
@@ -97,9 +97,9 @@ func ParseApiStandRequestBody(t reflect.Type) *RequestBody {
 	var property Property
 	switch t2.Type.Kind() {
 	case reflect.Struct:
-		property = *Struct(t2.Type, "业务请求", "json")
+		property = *Struct(t2.Type, "业务请求", "json", RequestRequired)
 	case reflect.Slice, reflect.Array:
-		property = *Array(t2.Type, "业务请求", "json")
+		property = *Array(t2.Type, "业务请求", "json", RequestRequired)
 	case reflect.Interface:
 		property = *StructEmpty(t2.Type, "业务请求", "json")
 	case reflect.Map:
@@ -144,9 +144,9 @@ func ParseApiStandResponse(t reflect.Type, businessStatusCodes []kit.Code) Respo
 	var dataProperty *Property
 	switch t1.Type.Kind() {
 	case reflect.Struct:
-		dataProperty = Struct(t1.Type, "业务响应Data", "json")
+		dataProperty = Struct(t1.Type, "业务响应Data", "json", ResponseRequired)
 	case reflect.Slice, reflect.Array:
-		dataProperty = Array(t1.Type, "业务响应Data", "json")
+		dataProperty = Array(t1.Type, "业务响应Data", "json", ResponseRequired)
 	case reflect.Interface:
 		dataProperty = StructEmpty(t1.Type, "业务响应Data", "json")
 	case reflect.Map:
