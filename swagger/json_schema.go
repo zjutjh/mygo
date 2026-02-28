@@ -1,6 +1,7 @@
 package swagger
 
 type Property struct {
+	Ref         string               `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Items       *Property            `json:"items,omitempty" yaml:"items,omitempty"`
 	Properties  map[string]*Property `json:"properties,omitempty" yaml:"properties,omitempty"`
 	Description string               `json:"description,omitempty" yaml:"description,omitempty"`

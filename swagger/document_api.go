@@ -145,6 +145,7 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 		// projectKey := "API Document"
 		servers := []Server{}
 		_ = config.Pick().UnmarshalKey("openapi.servers", &servers)
+		schemaReg := newSchemaRegistry()
 		openapi := OpenAPI{
 			Openapi: "3.1.0",
 			Info: Info{
@@ -156,6 +157,7 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 			Servers: servers,
 			Paths:   map[string]PathItem{},
 			Components: Components{
+				Schemas:         schemaReg.schemas,
 				Examples:        map[string]ExampleObject{},
 				SecuritySchemes: map[string]SecurityScheme{},
 			},
@@ -217,7 +219,7 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 			parameters = append(parameters, ParseApiStandRequestParameters(t, "Uri", "uri", "path")...)
 
 			// 获取接口request body
-			request := ParseApiStandRequestBody(t)
+			request := ParseApiStandRequestBody(t, schemaReg)
 
 			// 获取所有中间件（不包含末端的处理器）
 			middlewares := middlewareMap.get(method, route.Path)
@@ -228,7 +230,7 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 
 			// 按标准模式获取接口response
 			responses := map[string]Response{
-				"200": ParseApiStandResponse(t, businessStatusCodes),
+				"200": ParseApiStandResponse(t, businessStatusCodes, schemaReg),
 			}
 			if failureResponse, exist := GenerateApiFailureResponse(businessStatusCodes); exist {
 				responses["default"] = failureResponse

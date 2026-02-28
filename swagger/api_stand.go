@@ -84,7 +84,7 @@ func getRequestFields(t reflect.Type, validatePos, in string) []Parameter {
 	return parameters
 }
 
-func ParseApiStandRequestBody(t reflect.Type) *RequestBody {
+func ParseApiStandRequestBody(t reflect.Type, schemaReg *schemaRegistry) *RequestBody {
 	requestBody := &RequestBody{}
 	t1, exist := t.FieldByName("Request")
 	if !exist {
@@ -94,17 +94,11 @@ func ParseApiStandRequestBody(t reflect.Type) *RequestBody {
 	if !exist {
 		return nil
 	}
-	var property Property
-	switch t2.Type.Kind() {
-	case reflect.Struct:
-		property = *Struct(t2.Type, "业务请求", "json", RequestRequired)
-	case reflect.Slice, reflect.Array:
-		property = *Array(t2.Type, "业务请求", "json", RequestRequired)
-	case reflect.Interface:
-		property = *StructEmpty(t2.Type, "业务请求", "json")
-	case reflect.Map:
-		property = *StructEmpty(t2.Type, "业务请求", "json")
-	default:
+	if schemaReg == nil {
+		schemaReg = newSchemaRegistry()
+	}
+	property := schemaReg.buildSchemaForType(t2.Type, "业务请求", "json", RequestRequired)
+	if property == nil {
 		Output("不支持的Request Body类型[%s]\n", t2.Type.Kind())
 		return nil
 	}
@@ -112,7 +106,7 @@ func ParseApiStandRequestBody(t reflect.Type) *RequestBody {
 	requestBody.Description = "请求body"
 	requestBody.Required = true
 	requestBody.Content = map[string]MediaType{
-		"application/json": {Schema: property},
+		"application/json": {Schema: *property},
 	}
 	return requestBody
 }
@@ -127,11 +121,14 @@ type commResponse struct {
 	Message string `json:"message"`
 }
 
-func ParseApiStandResponse(t reflect.Type, businessStatusCodes []kit.Code) Response {
+func ParseApiStandResponse(t reflect.Type, businessStatusCodes []kit.Code, schemaReg *schemaRegistry) Response {
 	standResponse := Response{}
 	t1, exist := t.FieldByName("Response")
 	if !exist {
 		return standResponse
+	}
+	if schemaReg == nil {
+		schemaReg = newSchemaRegistry()
 	}
 	codeProperty := &Property{
 		Description: "业务响应Code",
@@ -141,17 +138,8 @@ func ParseApiStandResponse(t reflect.Type, businessStatusCodes []kit.Code) Respo
 		Description: "业务响应Message",
 		Type:        "string",
 	}
-	var dataProperty *Property
-	switch t1.Type.Kind() {
-	case reflect.Struct:
-		dataProperty = Struct(t1.Type, "业务响应Data", "json", ResponseRequired)
-	case reflect.Slice, reflect.Array:
-		dataProperty = Array(t1.Type, "业务响应Data", "json", ResponseRequired)
-	case reflect.Interface:
-		dataProperty = StructEmpty(t1.Type, "业务响应Data", "json")
-	case reflect.Map:
-		dataProperty = StructEmpty(t1.Type, "业务响应Data", "json")
-	default:
+	dataProperty := schemaReg.buildSchemaForType(t1.Type, "业务响应Data", "json", ResponseRequired)
+	if dataProperty == nil {
 		Output("不支持的Response类型[%s]\n", t1.Type.Kind())
 		return standResponse
 	}

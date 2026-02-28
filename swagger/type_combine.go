@@ -49,7 +49,7 @@ func Struct(t reflect.Type, desc string, nameKey string, requiredFunc func(refle
 				for k, v := range op.Properties {
 					property.Properties[k] = v
 				}
-				property.Required = append(property.Required, property.Required...)
+				property.Required = append(property.Required, op.Required...)
 			} else {
 				property.Properties[Name(tx, nameKey)], required = Struct(txt, Desc(tx), nameKey, requiredFunc), requiredFunc(tx)
 			}
