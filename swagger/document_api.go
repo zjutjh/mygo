@@ -190,7 +190,7 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 			}
 
 			// 获取接口group、path、method
-			group := strings.Join(strings.Split(route.Path, "/")[groupKeyStart:groupKeyEnd], "/")
+			group := safeGroup(route.Path, groupKeyStart, groupKeyEnd)
 			pathSlice := strings.Split(route.Path, "/")
 			for i, s := range pathSlice {
 				if s != "" && (s[0] == ':' || s[0] == '*') {
@@ -304,6 +304,36 @@ func parseAuthenticationMiddleware(middlewareNames []string) []*securitySchemeIn
 		}
 	}
 	return nil
+}
+
+func safeGroup(routePath string, start, end int) string {
+	pathSlice := strings.Split(routePath, "/")
+	max := len(pathSlice)
+	if start < 0 {
+		start = 0
+	}
+	if end < 0 {
+		end = 0
+	}
+	if start > max {
+		start = max
+	}
+	if end > max {
+		end = max
+	}
+	if end < start {
+		end = start
+	}
+	group := strings.Join(pathSlice[start:end], "/")
+	if group != "" {
+		return group
+	}
+	for _, segment := range pathSlice {
+		if segment != "" {
+			return segment
+		}
+	}
+	return "default"
 }
 
 // limitString 限制输出的字符数
