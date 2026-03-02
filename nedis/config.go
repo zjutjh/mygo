@@ -1,6 +1,10 @@
 package nedis
 
-import "time"
+import (
+	"time"
+
+	"github.com/redis/go-redis/v9/maintnotifications"
+)
 
 const (
 	ModeSingle   = "single"
@@ -32,6 +36,9 @@ var DefaultConfig = Config{
 	WriteTimeout:          0,
 	ContextTimeoutEnabled: false,
 
+	ReadBufferSize:  0,
+	WriteBufferSize: 0,
+
 	PoolFIFO:        false,
 	PoolSize:        0,
 	PoolTimeout:     0,
@@ -48,9 +55,25 @@ var DefaultConfig = Config{
 
 	MasterName: "",
 
-	DisableIdentity: false,
-	IdentitySuffix:  "",
-	UnstableResp3:   false,
+	DisableIdentity:       false,
+	IdentitySuffix:        "",
+	FailingTimeoutSeconds: 0,
+	UnstableResp3:         false,
+	IsClusterMode:         false,
+
+	MaintNotificationsConfig: MaintnotificationsConfig{
+		Mode:                           maintnotifications.ModeDisabled,
+		EndpointType:                   maintnotifications.EndpointTypeAuto,
+		RelaxedTimeout:                 10 * time.Second,
+		HandoffTimeout:                 15 * time.Second,
+		MaxWorkers:                     0,
+		HandoffQueueSize:               0,
+		PostHandoffRelaxedDuration:     0,
+		CircuitBreakerFailureThreshold: 5,
+		CircuitBreakerResetTimeout:     60 * time.Second,
+		CircuitBreakerMaxRequests:      3,
+		MaxHandoffRetries:              3,
+	},
 
 	Mode: ModeSingle,
 }
@@ -79,6 +102,9 @@ type Config struct {
 	WriteTimeout          time.Duration `mapstructure:"write_timeout"`
 	ContextTimeoutEnabled bool          `mapstructure:"context_timeout_enabled"`
 
+	ReadBufferSize  int `mapstructure:"read_buffer_size"`
+	WriteBufferSize int `mapstructure:"write_buffer_size"`
+
 	PoolFIFO        bool          `mapstructure:"pool_fifo"`
 	PoolSize        int           `mapstructure:"pool_size"`
 	PoolTimeout     time.Duration `mapstructure:"pool_timeout"`
@@ -95,9 +121,27 @@ type Config struct {
 
 	MasterName string `mapstructure:"master_name"`
 
-	DisableIdentity bool   `mapstructure:"disable_identity"`
-	IdentitySuffix  string `mapstructure:"identity_suffix"`
-	UnstableResp3   bool   `mapstructure:"unstable_resp3"`
+	DisableIdentity       bool   `mapstructure:"disable_identity"`
+	IdentitySuffix        string `mapstructure:"identity_suffix"`
+	FailingTimeoutSeconds int    `mapstructure:"failing_timeout_seconds"`
+	UnstableResp3         bool   `mapstructure:"unstable_resp3"`
+	IsClusterMode         bool   `mapstructure:"is_cluster_mode"`
+
+	MaintNotificationsConfig MaintnotificationsConfig `mapstructure:"maint_notifications_config"`
 
 	Mode string `mapstructure:"mode"`
+}
+
+type MaintnotificationsConfig struct {
+	Mode                           maintnotifications.Mode         `mapstructure:"mode"`
+	EndpointType                   maintnotifications.EndpointType `mapstructure:"endpoint_type"`
+	RelaxedTimeout                 time.Duration                   `mapstructure:"relaxed_timeout"`
+	HandoffTimeout                 time.Duration                   `mapstructure:"handoff_timeout"`
+	MaxWorkers                     int                             `mapstructure:"max_workers"`
+	HandoffQueueSize               int                             `mapstructure:"handoff_queue_size"`
+	PostHandoffRelaxedDuration     time.Duration                   `mapstructure:"post_handoff_relaxed_duration"`
+	CircuitBreakerFailureThreshold int                             `mapstructure:"circuit_breaker_failure_threshold"`
+	CircuitBreakerResetTimeout     time.Duration                   `mapstructure:"circuit_breaker_reset_timeout"`
+	CircuitBreakerMaxRequests      int                             `mapstructure:"circuit_breaker_max_requests"`
+	MaxHandoffRetries              int                             `mapstructure:"max_handoff_retries"`
 }

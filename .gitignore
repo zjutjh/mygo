@@ -32,3 +32,9 @@ go.work.sum
 .vscode/
 
 .DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.txt
+*_test.go

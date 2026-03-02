@@ -18,7 +18,10 @@ var DefaultConfig = Config{
 		LocalTime:      false,
 		Compress:       false,
 	},
-	// Gin: GinConfig{},
+
+	Gin: GinConfig{
+		UseH2C: false,
+	},
 }
 
 type Config struct {
@@ -29,7 +32,8 @@ type Config struct {
 	Pprof bool `mapstructure:"pprof"`
 
 	Log LogConfig `mapstructure:"log"`
-	// Gin GinConfig `mapstructure:"gin"`
+
+	Gin GinConfig `mapstructure:"gin"`
 }
 
 type LogConfig struct {
@@ -44,6 +48,6 @@ type LogConfig struct {
 
 // Gin配置 有需要时再补充
 type GinConfig struct {
-	// RedirectTrailingSlash bool `mapstructure:"redirect_trailing_slash"`
+	UseH2C bool `mapstructure:"use_h2c"`
 	// ......
 }

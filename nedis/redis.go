@@ -2,6 +2,7 @@ package nedis
 
 import (
 	"github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9/maintnotifications"
 
 	"github.com/zjutjh/mygo/nlog"
 )
@@ -35,6 +36,8 @@ func New(conf Config) redis.UniversalClient {
 		ReadTimeout:           conf.ReadTimeout,
 		WriteTimeout:          conf.WriteTimeout,
 		ContextTimeoutEnabled: conf.ContextTimeoutEnabled,
+		ReadBufferSize:        conf.ReadBufferSize,
+		WriteBufferSize:       conf.WriteBufferSize,
 		PoolFIFO:              conf.PoolFIFO,
 		PoolSize:              conf.PoolSize,
 		PoolTimeout:           conf.PoolTimeout,
@@ -50,7 +53,22 @@ func New(conf Config) redis.UniversalClient {
 		MasterName:            conf.MasterName,
 		DisableIdentity:       conf.DisableIdentity,
 		IdentitySuffix:        conf.IdentitySuffix,
+		FailingTimeoutSeconds: conf.FailingTimeoutSeconds,
 		UnstableResp3:         conf.UnstableResp3,
+		IsClusterMode:         conf.IsClusterMode,
+		MaintNotificationsConfig: &maintnotifications.Config{
+			Mode:                           conf.MaintNotificationsConfig.Mode,
+			EndpointType:                   conf.MaintNotificationsConfig.EndpointType,
+			RelaxedTimeout:                 conf.MaintNotificationsConfig.RelaxedTimeout,
+			HandoffTimeout:                 conf.MaintNotificationsConfig.HandoffTimeout,
+			MaxWorkers:                     conf.MaintNotificationsConfig.MaxWorkers,
+			HandoffQueueSize:               conf.MaintNotificationsConfig.HandoffQueueSize,
+			PostHandoffRelaxedDuration:     conf.MaintNotificationsConfig.PostHandoffRelaxedDuration,
+			CircuitBreakerFailureThreshold: conf.MaintNotificationsConfig.CircuitBreakerFailureThreshold,
+			CircuitBreakerResetTimeout:     conf.MaintNotificationsConfig.CircuitBreakerResetTimeout,
+			CircuitBreakerMaxRequests:      conf.MaintNotificationsConfig.CircuitBreakerMaxRequests,
+			MaxHandoffRetries:              conf.MaintNotificationsConfig.MaxHandoffRetries,
+		},
 	}
 
 	// 创建client并挂载hook

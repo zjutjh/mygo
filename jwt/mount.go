@@ -8,23 +8,24 @@ import (
 	"github.com/zjutjh/mygo/kit"
 )
 
-const MountKey = "_jwt_uid_"
+const MountKey = "_jwt_identity_"
 
-// MountUid 挂载uid至上下文
-func MountUid(ctx *gin.Context, uid string) {
-	ctx.Set(MountKey, uid)
+// MountIdentity 挂载 identity 至上下文
+func MountIdentity[T any](ctx *gin.Context, identity T) {
+	ctx.Set(MountKey, identity)
 }
 
-// GetUid 获取上下文中挂载的uid
-// 注意：该函数需在 MountUid 函数进行挂载后使用
-func GetUid(ctx *gin.Context) (string, error) {
+// GetIdentity 获取上下文中挂载的 identity
+// 注意：该函数需在 MountIdentity 函数进行挂载后使用
+func GetIdentity[T any](ctx *gin.Context) (T, error) {
+	var zero T
 	v, ok := ctx.Get(MountKey)
 	if !ok {
-		return "", fmt.Errorf("%w: 当前上下文未挂载[%s]", kit.ErrNotFound, MountKey)
+		return zero, fmt.Errorf("%w: 当前上下文未挂载[%s]", kit.ErrNotFound, MountKey)
 	}
-	uid, ok := v.(string)
+	identity, ok := v.(T)
 	if !ok {
-		return "", fmt.Errorf("%w: 当前上下文挂载[%s]类型错误", kit.ErrDataFormat, MountKey)
+		return zero, fmt.Errorf("%w: 当前上下文挂载[%s]类型错误", kit.ErrDataFormat, MountKey)
 	}
-	return uid, nil
+	return identity, nil
 }

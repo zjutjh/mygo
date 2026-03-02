@@ -14,7 +14,7 @@ import (
 
 // Auth JWT 鉴权中间件
 // 参数: mustLogged 是否必须登录
-func Auth(mustLogged bool) gin.HandlerFunc {
+func Auth[T any](mustLogged bool, scopes ...string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 获取 Token
 		token := ctx.GetHeader("Authorization")
@@ -29,7 +29,7 @@ func Auth(mustLogged bool) gin.HandlerFunc {
 
 		// 解析 Token
 		token = token[7:]
-		claims, err := myjwt.Pick().ParseToken(token)
+		identity, err := myjwt.Pick[T](scopes...).ParseToken(token)
 		if err != nil {
 			if !mustLogged {
 				ctx.Next()
@@ -44,7 +44,7 @@ func Auth(mustLogged bool) gin.HandlerFunc {
 			return
 		}
 
-		// 挂载 uid
-		myjwt.MountUid(ctx, claims.Subject)
+		// 挂载 identity
+		myjwt.MountIdentity(ctx, identity)
 	}
 }

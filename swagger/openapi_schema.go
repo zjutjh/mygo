@@ -71,6 +71,7 @@ type SecurityScheme struct {
 }
 
 type Components struct {
+	Schemas         map[string]Property       `json:"schemas,omitempty" yaml:"schemas,omitempty"`
 	Examples        map[string]ExampleObject  `json:"examples,omitempty" yaml:"examples,omitempty"`
 	SecuritySchemes map[string]SecurityScheme `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
 }

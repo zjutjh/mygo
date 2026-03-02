@@ -1,28 +1,28 @@
-package jwt
+package miniProgram
 
 import (
 	"fmt"
 
+	"github.com/ArtisanCloud/PowerWeChat/v3/src/miniProgram"
 	"github.com/jinzhu/copier"
 	"github.com/samber/do"
-
 	"github.com/zjutjh/mygo/config"
 	"github.com/zjutjh/mygo/kit"
 )
 
 const (
-	iocPrefix    = "_jwt_:"
-	defaultScope = "jwt"
+	iocPrefix    = "_wechat_mini_program_"
+	defaultScope = "wechat_mini_program"
 )
 
 // Boot 预加载默认实例 同时加载指定实例列表
-func Boot[T any](scopes ...string) func() error {
+func Boot(scopes ...string) func() error {
 	return func() error {
-		if err := provide[T](defaultScope); err != nil {
+		if err := provide(defaultScope); err != nil {
 			return fmt.Errorf("加载资源[%s]错误: %w", defaultScope, err)
 		}
 		for _, scope := range scopes {
-			if err := provide[T](scope); err != nil {
+			if err := provide(scope); err != nil {
 				return fmt.Errorf("加载资源[%s]错误: %w", scope, err)
 			}
 		}
@@ -30,35 +30,23 @@ func Boot[T any](scopes ...string) func() error {
 	}
 }
 
-// BootCustom 仅加载指定实例列表
-func BootCustom[T any](scopes ...string) func() error {
-	return func() error {
-		for _, scope := range scopes {
-			if err := provide[T](scope); err != nil {
-				return fmt.Errorf("加载资源[%s]错误: %w", scope, err)
-			}
-		}
-		return nil
-	}
-}
-
-// Exist 判断scope实例是否挂载 (被Boot过) 且类型正确
-func Exist[T any](scope string) bool {
-	_, err := do.InvokeNamed[*JWT[T]](nil, iocPrefix+scope)
+// Exist 判断实例是否挂载（被Boot过）且类型正确
+func Exist(scope string) bool {
+	_, err := do.InvokeNamed[*miniProgram.MiniProgram](nil, iocPrefix+scope)
 	return err == nil
 }
 
 // Pick 获取指定scope实例
-func Pick[T any](scopes ...string) *JWT[T] {
+func Pick(scopes ...string) *miniProgram.MiniProgram {
 	scope := defaultScope
 	if len(scopes) != 0 && scopes[0] != "" {
 		scope = scopes[0]
 	}
-	return do.MustInvokeNamed[*JWT[T]](nil, iocPrefix+scope)
+	return do.MustInvokeNamed[*miniProgram.MiniProgram](nil, iocPrefix+scope)
 }
 
 // provide 提供指定scope实例
-func provide[T any](scope string) error {
+func provide(scope string) error {
 	// 获取配置
 	conf, err := getConf(scope)
 	if err != nil {
@@ -66,7 +54,10 @@ func provide[T any](scope string) error {
 	}
 
 	// 初始化实例
-	instance := New[T](conf)
+	instance, err := New(conf)
+	if err != nil {
+		return fmt.Errorf("初始化MiniProgram实例错误: %w", err)
+	}
 
 	// 挂载实例
 	do.ProvideNamedValue(nil, iocPrefix+scope, instance)
