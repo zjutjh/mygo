@@ -40,7 +40,7 @@ func New(conf Config) (*mongo.Database, error) {
 		return nil, fmt.Errorf("创建MongoDB实例错误: %w", err)
 	}
 
-	//失败断开连接
+	// 失败断开连接
 	if err = client.Ping(context.Background(), readpref.Primary()); err != nil {
 		_ = client.Disconnect(context.Background())
 		return nil, fmt.Errorf("MongoDB连接测试失败: %w", err)
