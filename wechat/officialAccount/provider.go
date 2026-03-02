@@ -3,7 +3,7 @@ package officialAccount
 import (
 	"fmt"
 
-	pwoa "github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
+	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
 	"github.com/jinzhu/copier"
 	"github.com/samber/do"
 
@@ -33,17 +33,17 @@ func Boot(scopes ...string) func() error {
 
 // Exist 判断scope实例是否挂载 (被Boot过) 且类型正确
 func Exist(scope string) bool {
-	_, err := do.InvokeNamed[*pwoa.OfficialAccount](nil, iocPrefix+scope)
+	_, err := do.InvokeNamed[*officialAccount.OfficialAccount](nil, iocPrefix+scope)
 	return err == nil
 }
 
 // Pick 获取指定scope实例
-func Pick(scopes ...string) *pwoa.OfficialAccount {
+func Pick(scopes ...string) *officialAccount.OfficialAccount {
 	scope := defaultScope
 	if len(scopes) != 0 && scopes[0] != "" {
 		scope = scopes[0]
 	}
-	return do.MustInvokeNamed[*pwoa.OfficialAccount](nil, iocPrefix+scope)
+	return do.MustInvokeNamed[*officialAccount.OfficialAccount](nil, iocPrefix+scope)
 }
 
 // provide 提供指定scope实例
@@ -57,11 +57,12 @@ func provide(scope string) error {
 	// 初始化实例
 	instance, err := New(conf)
 	if err != nil {
-		return err
+		return fmt.Errorf("初始化OfficialAccount实例错误: %w", err)
 	}
 
 	// 挂载实例
 	do.ProvideNamedValue(nil, iocPrefix+scope, instance)
+
 	return nil
 }
 
@@ -72,13 +73,11 @@ func getConf(scope string) (conf Config, err error) {
 	if err != nil {
 		return conf, err
 	}
-
 	// 判断 scope 配置是否存在
 	cfg := config.Pick()
 	if !cfg.IsSet(scope) {
 		return conf, fmt.Errorf("%w: 配置config.yaml[%s]不存在", kit.ErrNotFound, scope)
 	}
-
 	// 解析 config.yaml[{scope}]
 	err = cfg.UnmarshalKey(scope, &conf)
 	if err != nil {

@@ -144,7 +144,8 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 		// 项目服务实例信息
 		// projectKey := "API Document"
 		servers := []Server{}
-		config.Pick().UnmarshalKey("openapi.servers", &servers)
+		_ = config.Pick().UnmarshalKey("openapi.servers", &servers)
+		schemaReg := newSchemaRegistry()
 		openapi := OpenAPI{
 			Openapi: "3.1.0",
 			Info: Info{
@@ -156,6 +157,7 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 			Servers: servers,
 			Paths:   map[string]PathItem{},
 			Components: Components{
+				Schemas:         schemaReg.schemas,
 				Examples:        map[string]ExampleObject{},
 				SecuritySchemes: map[string]SecurityScheme{},
 			},
@@ -188,7 +190,7 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 			}
 
 			// 获取接口group、path、method
-			group := strings.Join(strings.Split(route.Path, "/")[groupKeyStart:groupKeyEnd], "/")
+			group := safeGroup(route.Path, groupKeyStart, groupKeyEnd)
 			pathSlice := strings.Split(route.Path, "/")
 			for i, s := range pathSlice {
 				if s != "" && (s[0] == ':' || s[0] == '*') {
@@ -200,7 +202,7 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 
 			// 获取api的type、value反射
 			t := reflect.TypeOf(api)
-			//v := reflect.ValueOf(api)
+			// v := reflect.ValueOf(api)
 
 			// 获取接口name、description、summary
 			d, ok := t.FieldByName("Info")
@@ -217,7 +219,7 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 			parameters = append(parameters, ParseApiStandRequestParameters(t, "Uri", "uri", "path")...)
 
 			// 获取接口request body
-			request := ParseApiStandRequestBody(t)
+			request := ParseApiStandRequestBody(t, schemaReg)
 
 			// 获取所有中间件（不包含末端的处理器）
 			middlewares := middlewareMap.get(method, route.Path)
@@ -228,9 +230,9 @@ func DocumentHandler(engine *gin.Engine) gin.HandlerFunc {
 
 			// 按标准模式获取接口response
 			responses := map[string]Response{
-				"200": ParseApiStandResponse(t, businessStatusCodes),
+				"200": ParseApiStandResponse(t, businessStatusCodes, schemaReg),
 			}
-			if failureResponse, exist := GenerateApifailureResponse(businessStatusCodes); exist {
+			if failureResponse, exist := GenerateApiFailureResponse(businessStatusCodes); exist {
 				responses["default"] = failureResponse
 			}
 
@@ -302,6 +304,36 @@ func parseAuthenticationMiddleware(middlewareNames []string) []*securitySchemeIn
 		}
 	}
 	return nil
+}
+
+func safeGroup(routePath string, start, end int) string {
+	pathSlice := strings.Split(routePath, "/")
+	max := len(pathSlice)
+	if start < 0 {
+		start = 0
+	}
+	if end < 0 {
+		end = 0
+	}
+	if start > max {
+		start = max
+	}
+	if end > max {
+		end = max
+	}
+	if end < start {
+		end = start
+	}
+	group := strings.Join(pathSlice[start:end], "/")
+	if group != "" {
+		return group
+	}
+	for _, segment := range pathSlice {
+		if segment != "" {
+			return segment
+		}
+	}
+	return "default"
 }
 
 // limitString 限制输出的字符数

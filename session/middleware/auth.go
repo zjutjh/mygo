@@ -9,10 +9,15 @@ import (
 )
 
 // Auth Session 鉴权中间件
-func Auth() gin.HandlerFunc {
+// 参数: mustLogged 是否必须登录
+func Auth[T any](mustLogged bool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		_, err := session.GetUid(ctx)
+		_, err := session.GetIdentity[T](ctx)
 		if err != nil {
+			if !mustLogged {
+				ctx.Next()
+				return
+			}
 			reply.Fail(ctx, kit.CodeNotLoggedIn)
 			return
 		}

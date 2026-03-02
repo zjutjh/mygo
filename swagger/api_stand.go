@@ -2,8 +2,10 @@ package swagger
 
 import (
 	"fmt"
+	"mime/multipart"
 	"reflect"
 	"slices"
+	"time"
 
 	"github.com/zjutjh/mygo/kit"
 )
@@ -30,41 +32,49 @@ func getRequestFields(t reflect.Type, validatePos, in string) []Parameter {
 			Name:        tx.Tag.Get(validatePos),
 			In:          in,
 			Description: Desc(tx),
-			Required:    Required(tx),
+			Required:    RequestRequired(tx),
 		}
 		var property *Property
-		switch tx.Type.Kind() {
+		txt := tx.Type
+	fieldstart:
+		switch txt.Kind() {
 		case reflect.Bool:
-			property = Boolean(tx.Type, Desc(tx))
+			property = Boolean(txt, Desc(tx))
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			property = IntegerTag(tx, Integer(tx.Type, Desc(tx)))
+			property = IntegerTag(tx, Integer(txt, Desc(tx)))
 		case reflect.Float32, reflect.Float64:
-			property = NumberTag(tx, Number(tx.Type, Desc(tx)))
+			property = NumberTag(tx, Number(txt, Desc(tx)))
 		case reflect.String:
-			property = StringTag(tx, String(tx.Type, Desc(tx)))
+			property = StringTag(tx, String(txt, Desc(tx)))
 		case reflect.Array, reflect.Slice:
-			Output("不支持的响应类型[%s]\n", tx.Type.Kind())
+			Output("不支持的响应类型[%s]\n", txt.Kind())
 		case reflect.Struct:
-			// 如果是匿名的结构体字段,则采用平铺的方式
-			if tx.Anonymous {
-				parameters = append(parameters, getRequestFields(tx.Type, validatePos, in)...)
+			if txt == reflect.TypeOf(time.Time{}) {
+				property = Time(txt, Desc(tx))
+			} else if txt == reflect.TypeOf(multipart.FileHeader{}) {
+				Output("不支持的响应类型[multipart.FileHeader]\n")
+			} else if tx.Anonymous {
+				// 如果是匿名的结构体字段,则采用平铺的方式
+				parameters = append(parameters, getRequestFields(txt, validatePos, in)...)
 			} else {
-				Output("不支持的响应类型[%s]\n", tx.Type.Kind())
+				Output("不支持的响应类型[%s]\n", txt.Kind())
 			}
 		case reflect.Uintptr:
-			Output("不支持的响应类型[%s]\n", tx.Type.Kind())
+			Output("不支持的响应类型[%s]\n", txt.Kind())
 		case reflect.Pointer:
-			Output("不支持的响应类型[%s]\n", tx.Type.Kind())
+			vx := reflect.New(txt)
+			txt = vx.Type().Elem().Elem()
+			goto fieldstart
 		case reflect.UnsafePointer:
-			Output("不支持的响应类型[%s]\n", tx.Type.Kind())
+			Output("不支持的响应类型[%s]\n", txt.Kind())
 		case reflect.Interface:
-			Output("不支持的响应类型[%s]\n", tx.Type.Kind())
+			Output("不支持的响应类型[%s]\n", txt.Kind())
 		case reflect.Map:
-			Output("不支持的响应类型[%s]\n", tx.Type.Kind())
+			Output("不支持的响应类型[%s]\n", txt.Kind())
 		case reflect.Invalid, reflect.Complex64, reflect.Complex128, reflect.Chan, reflect.Func:
-			Output("不支持的响应类型[%s]\n", tx.Type.Kind())
+			Output("不支持的响应类型[%s]\n", txt.Kind())
 		default:
-			Output("不支持的响应类型[%s]\n", tx.Type.Kind())
+			Output("不支持的响应类型[%s]\n", txt.Kind())
 		}
 		if nil != property {
 			parameter.Schema = *property
@@ -74,7 +84,7 @@ func getRequestFields(t reflect.Type, validatePos, in string) []Parameter {
 	return parameters
 }
 
-func ParseApiStandRequestBody(t reflect.Type) *RequestBody {
+func ParseApiStandRequestBody(t reflect.Type, schemaReg *schemaRegistry) *RequestBody {
 	requestBody := &RequestBody{}
 	t1, exist := t.FieldByName("Request")
 	if !exist {
@@ -84,17 +94,11 @@ func ParseApiStandRequestBody(t reflect.Type) *RequestBody {
 	if !exist {
 		return nil
 	}
-	var property Property
-	switch t2.Type.Kind() {
-	case reflect.Struct:
-		property = *Struct(t2.Type, "业务请求", "json")
-	case reflect.Slice, reflect.Array:
-		property = *Array(t2.Type, "业务请求", "json")
-	case reflect.Interface:
-		property = *StructEmpty(t2.Type, "业务请求", "json")
-	case reflect.Map:
-		property = *StructEmpty(t2.Type, "业务请求", "json")
-	default:
+	if schemaReg == nil {
+		schemaReg = newSchemaRegistry()
+	}
+	property := schemaReg.buildSchemaForType(t2.Type, "业务请求", "json", RequestRequired)
+	if property == nil {
 		Output("不支持的Request Body类型[%s]\n", t2.Type.Kind())
 		return nil
 	}
@@ -102,7 +106,7 @@ func ParseApiStandRequestBody(t reflect.Type) *RequestBody {
 	requestBody.Description = "请求body"
 	requestBody.Required = true
 	requestBody.Content = map[string]MediaType{
-		"application/json": {Schema: property},
+		"application/json": {Schema: *property},
 	}
 	return requestBody
 }
@@ -117,11 +121,14 @@ type commResponse struct {
 	Message string `json:"message"`
 }
 
-func ParseApiStandResponse(t reflect.Type, businessStatusCodes []kit.Code) Response {
+func ParseApiStandResponse(t reflect.Type, businessStatusCodes []kit.Code, schemaReg *schemaRegistry) Response {
 	standResponse := Response{}
 	t1, exist := t.FieldByName("Response")
 	if !exist {
 		return standResponse
+	}
+	if schemaReg == nil {
+		schemaReg = newSchemaRegistry()
 	}
 	codeProperty := &Property{
 		Description: "业务响应Code",
@@ -131,17 +138,8 @@ func ParseApiStandResponse(t reflect.Type, businessStatusCodes []kit.Code) Respo
 		Description: "业务响应Message",
 		Type:        "string",
 	}
-	var dataProperty *Property
-	switch t1.Type.Kind() {
-	case reflect.Struct:
-		dataProperty = Struct(t1.Type, "业务响应Data", "json")
-	case reflect.Slice, reflect.Array:
-		dataProperty = Array(t1.Type, "业务响应Data", "json")
-	case reflect.Interface:
-		dataProperty = StructEmpty(t1.Type, "业务响应Data", "json")
-	case reflect.Map:
-		dataProperty = StructEmpty(t1.Type, "业务响应Data", "json")
-	default:
+	dataProperty := schemaReg.buildSchemaForType(t1.Type, "业务响应Data", "json", ResponseRequired)
+	if dataProperty == nil {
 		Output("不支持的Response类型[%s]\n", t1.Type.Kind())
 		return standResponse
 	}
@@ -164,8 +162,30 @@ func ParseApiStandResponse(t reflect.Type, businessStatusCodes []kit.Code) Respo
 	return standResponse
 }
 
-func GenerateApifailureResponse(businessStatusCodes []kit.Code) (Response, bool) {
+func GenerateApiFailureResponse(businessStatusCodes []kit.Code) (Response, bool) {
 	failureResponse := Response{}
+	codeProperty := &Property{
+		Description: "业务响应Code",
+		Type:        "integer",
+	}
+	messageProperty := &Property{
+		Description: "业务响应Message",
+		Type:        "string",
+	}
+	dataProperty := &Property{
+		Description: "业务响应Data",
+		Type:        "null",
+	}
+	failureProperty := Property{
+		Properties: map[string]*Property{
+			"code":    codeProperty,
+			"message": messageProperty,
+			"data":    dataProperty,
+		},
+		Description: "业务响应",
+		Type:        "object",
+		Required:    []string{"code", "message", "data"},
+	}
 	// 嵌入业务状态码清单
 	examples := map[string]ExampleObject{}
 	for _, code := range businessStatusCodes {
@@ -181,6 +201,6 @@ func GenerateApifailureResponse(businessStatusCodes []kit.Code) (Response, bool)
 		return failureResponse, false
 	}
 	failureResponse.Description = "处理失败时的业务响应 (HTTP 状态码仍为 200)"
-	failureResponse.Content = map[string]MediaType{"application/json": {Examples: examples}}
+	failureResponse.Content = map[string]MediaType{"application/json": {Schema: failureProperty, Examples: examples}}
 	return failureResponse, true
 }
