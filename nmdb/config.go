@@ -2,8 +2,15 @@ package nmdb
 
 import (
 	"time"
+)
 
-	"gorm.io/gorm/logger"
+type LogLevel int
+
+const (
+	Silent LogLevel = iota
+	Error
+	Warn
+	Info
 )
 
 var DefaultConfig = Config{
@@ -34,7 +41,7 @@ var DefaultConfig = Config{
 	SlowThreshold:             200 * time.Millisecond,
 	Colorful:                  false,
 	IgnoreRecordNotFoundError: true,
-	LogLevel:                  logger.Warn,
+	LogLevel:                  Warn,
 }
 
 type Config struct {
@@ -62,10 +69,10 @@ type Config struct {
 	AppName     string   `mapstructure:"app_name"`
 	Compressors []string `mapstructure:"compressors"`
 
-	OpenLogger                bool            `mapstructure:"open_logger"`
-	Log                       string          `mapstructure:"log"`
-	SlowThreshold             time.Duration   `mapstructure:"slow_threshold"`
-	Colorful                  bool            `mapstructure:"colorful"`
-	IgnoreRecordNotFoundError bool            `mapstructure:"ignore_record_not_found_error"`
-	LogLevel                  logger.LogLevel `mapstructure:"log_level"`
+	OpenLogger                bool          `mapstructure:"open_logger"`
+	Log                       string        `mapstructure:"log"`
+	SlowThreshold             time.Duration `mapstructure:"slow_threshold"`
+	Colorful                  bool          `mapstructure:"colorful"`
+	IgnoreRecordNotFoundError bool          `mapstructure:"ignore_record_not_found_error"`
+	LogLevel                  LogLevel      `mapstructure:"log_level"`
 }

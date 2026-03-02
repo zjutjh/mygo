@@ -19,21 +19,13 @@ type mdbLogger struct {
 	Colorful                  bool
 	l                         *logrus.Logger
 }
-type LogLevel int
 
-const (
-	Silent LogLevel = iota
-	Error
-	Warn
-	Info
-)
-
-func newDBLogger(l *logrus.Logger, logLevel LogLevel, slowThreshold time.Duration, IgnoreRecordNotFoundError bool, Colorful bool) *mdbLogger {
+func newDBLogger(l *logrus.Logger, conf Config) *mdbLogger {
 	return &mdbLogger{
-		logLevel:                  logLevel,
-		slowThreshold:             slowThreshold,
-		IgnoreRecordNotFoundError: IgnoreRecordNotFoundError,
-		Colorful:                  Colorful,
+		logLevel:                  conf.LogLevel,
+		slowThreshold:             conf.SlowThreshold,
+		IgnoreRecordNotFoundError: conf.IgnoreRecordNotFoundError,
+		Colorful:                  conf.Colorful,
 		l:                         l,
 	}
 }
