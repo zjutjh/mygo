@@ -50,5 +50,4 @@ func New(conf Config) (*mongo.Database, error) {
 	db = client.Database(conf.Database)
 
 	return db, nil
-
 }
