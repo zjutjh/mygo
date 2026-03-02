@@ -20,6 +20,7 @@ type mdbLogger struct {
 	l                         *logrus.Logger
 }
 
+// newDBLogger newDBLogger
 func newDBLogger(l *logrus.Logger, conf Config) *mdbLogger {
 	return &mdbLogger{
 		logLevel:                  conf.LogLevel,
@@ -58,7 +59,7 @@ func (l *mdbLogger) Error(ctx context.Context, msg string, data ...any) {
 	}
 }
 
-// Trace print sql message
+// Trace print  message
 func (l *mdbLogger) Trace(ctx context.Context, command string, duration time.Duration,
 	collection string, operation string, resultCount int64, err error) {
 
@@ -96,6 +97,7 @@ func (l *mdbLogger) Trace(ctx context.Context, command string, duration time.Dur
 
 }
 
+// getCallerInfo getCallerInfo
 func getCallerInfo() string {
 	_, file, line, ok := runtime.Caller(3)
 	if !ok {

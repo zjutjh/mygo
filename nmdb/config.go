@@ -13,6 +13,7 @@ const (
 	Info
 )
 
+// MongoDB 配置
 var DefaultConfig = Config{
 	Host:     []string{"localhost:27017"},
 	Username: "",
@@ -36,6 +37,17 @@ var DefaultConfig = Config{
 	RetryWrites: true,
 	RetryReads:  true,
 
+	// 读写关注配置
+	ReadConcern:    "",
+	WriteConcern:   "",
+	ReadPreference: "",
+
+	// 压缩配置
+	ZstdLevel: 0,
+
+	// 心跳检测
+	HeartbeatInterval: 10 * time.Second,
+	//日志配置
 	OpenLogger:                true,
 	Log:                       "",
 	SlowThreshold:             200 * time.Millisecond,
@@ -61,7 +73,7 @@ type Config struct {
 	MinPoolSize   uint64        `mapstructure:"min_pool_size"`
 	MaxConnecting uint64        `mapstructure:"max_connecting"`
 	MaxIdleTime   time.Duration `mapstructure:"max_idle_time"`
-
+	//其他配置
 	Direct      bool     `mapstructure:"direct"`
 	RetryWrites bool     `mapstructure:"retry_writes"`
 	RetryReads  bool     `mapstructure:"retry_reads"`
@@ -69,6 +81,18 @@ type Config struct {
 	AppName     string   `mapstructure:"app_name"`
 	Compressors []string `mapstructure:"compressors"`
 
+	// 读写关注配置
+	ReadConcern    string `mapstructure:"read_concern"`
+	WriteConcern   string `mapstructure:"write_concern"`
+	ReadPreference string `mapstructure:"read_preference"`
+
+	// 压缩配置
+	ZstdLevel int `mapstructure:"zstd_level"`
+
+	// 心跳检测
+	HeartbeatInterval time.Duration `mapstructure:"heartbeat_interval"`
+
+	//日志配置
 	OpenLogger                bool          `mapstructure:"open_logger"`
 	Log                       string        `mapstructure:"log"`
 	SlowThreshold             time.Duration `mapstructure:"slow_threshold"`
