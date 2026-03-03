@@ -47,7 +47,7 @@ func New(conf Config) *logrus.Logger {
 	logger.AddHook(&hookField{
 		app: config.AppName(),
 	})
-	if feishu.Exist("feishu") {
+	if feishu.Exist(conf.FeishuHook.Feishu) {
 		logger.AddHook(newFeishuHook(feishu.Pick(conf.FeishuHook.Feishu), conf.FeishuHook.NoticeLevels))
 	}
 

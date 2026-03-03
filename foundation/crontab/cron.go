@@ -85,7 +85,7 @@ func Recover(logger cron.Logger) cron.JobWrapper {
 					}
 					logger.Error(err, "panic", "stack", "...\n"+string(buf))
 					// 发送报警
-					if !feishu.Exist("feishu") {
+					if !feishu.Exist() {
 						return
 					}
 					go func() {
