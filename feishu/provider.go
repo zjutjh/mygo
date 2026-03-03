@@ -31,7 +31,11 @@ func Boot(scopes ...string) func() error {
 }
 
 // Exist 判断scope实例是否挂载 (被Boot过) 且类型正确
-func Exist(scope string) bool {
+func Exist(scopes ...string) bool {
+	scope := defaultScope
+	if len(scopes) != 0 && scopes[0] != "" {
+		scope = scopes[0]
+	}
 	_, err := do.InvokeNamed[*Feishu](nil, iocPrefix+scope)
 	return err == nil
 }
