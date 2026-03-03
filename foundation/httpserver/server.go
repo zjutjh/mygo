@@ -126,6 +126,9 @@ func accessLoggerFormatter() gin.LogFormatter {
 func recoveryHandler(ctx *gin.Context, err any) {
 	reply.Fail(ctx, kit.CodeUnknownError)
 	// 发送报警
+	if !feishu.Exist("feishu") {
+		return
+	}
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
