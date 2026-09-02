@@ -38,3 +38,4 @@ go.work.sum
 *.temp
 *.txt
 *_test.go
+!oauth/oauth_test.go
